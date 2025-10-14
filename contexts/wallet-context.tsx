@@ -135,6 +135,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (accounts.length > 0) {
           setAccount(accounts[0])
           setIsConnected(true)
+          await loadProfileFromSupabase(accounts[0])
+          try {
+            await web3Provider.initialize()
+            await web3Provider.switchToBNBChain()
+            const userBalance = await web3Provider.getBalance(accounts[0])
+            setBalance(userBalance)
+            console.log("[v0] User balance loaded on page refresh:", userBalance, "BNB")
+          } catch (error) {
+            console.error("[v0] Error initializing Web3Provider on page refresh:", error)
+          }
         }
       }
     } catch (error) {

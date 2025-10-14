@@ -18,20 +18,26 @@ export async function initializeRaffleRounds() {
   try {
     const supabase = await createClient()
 
+    // Check if there are any active rounds
+    const { data: existingRounds, error: checkError } = await supabase
+      .from("raffle_rounds")
+      .select("*")
+      .eq("status", "active")
+
+    if (checkError) {
+      console.error("[v0] Error checking existing rounds:", checkError)
+    }
+
+    // If active rounds exist, don't create new ones
+    if (existingRounds && existingRounds.length > 0) {
+      console.log("[v0] Active rounds already exist, skipping initialization")
+      return { success: true, message: "Active rounds already exist" }
+    }
+
+    // Only create new rounds if none exist
     const now = new Date()
     const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
-    // Delete all existing rounds to start fresh
-    const { error: deleteError } = await supabase
-      .from("raffle_rounds")
-      .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000") // Delete all
-
-    if (deleteError) {
-      console.error("[v0] Error deleting old rounds:", deleteError)
-    }
-
-    // Create fresh 24-hour rounds for all raffles
     const raffleIds = [1, 2, 3, 4]
     const roundsToInsert = raffleIds.map((raffleId) => ({
       raffle_id: raffleId.toString(),
@@ -47,8 +53,8 @@ export async function initializeRaffleRounds() {
 
     if (insertError) throw insertError
 
-    console.log("[v0] Successfully reset all raffle rounds to 24 hours from now")
-    return { success: true, message: "All raffle rounds reset to 24 hours" }
+    console.log("[v0] Successfully created initial 24-hour raffle rounds")
+    return { success: true, message: "Initial raffle rounds created" }
   } catch (error) {
     console.error("[v0] Error initializing raffle rounds:", error)
     return { success: false, message: "Failed to initialize rounds" }

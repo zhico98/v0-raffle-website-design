@@ -44,17 +44,30 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
     }
 
     loadRound()
+
+    const refreshInterval = setInterval(loadRound, 5 * 60 * 1000)
+
+    return () => clearInterval(refreshInterval)
   }, [raffle.id])
 
   useEffect(() => {
     if (!currentRound) return
 
     const interval = setInterval(() => {
-      setTimeRemaining(calculateTimeRemaining(currentRound.end_time))
+      const newTimeRemaining = calculateTimeRemaining(currentRound.end_time)
+      setTimeRemaining(newTimeRemaining)
+
+      if (newTimeRemaining.isExpired && !timeRemaining.isExpired) {
+        getCurrentRound(raffle.id).then((result) => {
+          if (result.success && result.data) {
+            setCurrentRound(result.data)
+          }
+        })
+      }
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [currentRound])
+  }, [currentRound, raffle.id, timeRemaining.isExpired])
 
   const ticketsSold = currentRound?.total_tickets_sold || raffle.ticketsSold
   const percentage = (ticketsSold / raffle.totalTickets) * 100

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { Orbitron, Poppins } from "next/font/google"
 import { WalletProvider } from "@/contexts/wallet-context"
+import { RaffleInitializer } from "@/components/raffle-initializer"
 import "./globals.css"
 
 const orbitron = Orbitron({
@@ -43,6 +44,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${orbitron.variable} ${poppins.variable} font-sans antialiased`}>
         <WalletProvider>
+          <RaffleInitializer />
           <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
           <Analytics />
         </WalletProvider>

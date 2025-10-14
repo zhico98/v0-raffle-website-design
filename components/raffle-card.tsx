@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Clock } from "lucide-react"
 import { useState, useEffect } from "react"
 import { calculateTimeRemaining } from "@/lib/countdown-utils"
-import { getCurrentRound, type RaffleRound } from "@/lib/raffle-rounds"
+import { getCurrentRound, type RaffleRound } from "@/lib/actions/raffle-actions"
 
 interface RaffleCardProps {
   raffle: {
@@ -35,13 +35,12 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
 
   useEffect(() => {
     async function loadRound() {
-      const round = await getCurrentRound(raffle.id.toString())
-      setCurrentRound(round)
-      setIsLoading(false)
-
-      if (round) {
-        setTimeRemaining(calculateTimeRemaining(round.end_time))
+      const result = await getCurrentRound(raffle.id)
+      if (result.success && result.data) {
+        setCurrentRound(result.data)
+        setTimeRemaining(calculateTimeRemaining(result.data.end_time))
       }
+      setIsLoading(false)
     }
 
     loadRound()
@@ -113,7 +112,7 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
             </div>
             <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#FFD95E] to-[#FFB300] rounded-full"
+                className="h-full bg-gradient-to-r from-[#FFD95E] to-[#FFB800] rounded-full"
                 style={{
                   width: `${percentage}%`,
                   transition: "width 0.5s ease-out",

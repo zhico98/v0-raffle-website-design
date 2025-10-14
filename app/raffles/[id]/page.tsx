@@ -13,8 +13,8 @@ import { ArrowLeft, Clock, Minus, Plus, CheckCircle2, Loader2 } from "lucide-rea
 import { useWallet } from "@/contexts/wallet-context"
 import { calculateTimeRemaining } from "@/lib/countdown-utils"
 import { raffleContract } from "@/lib/raffle-contract"
-import { saveTransaction, hasUserEnteredRaffle, type Transaction } from "@/lib/transaction-storage"
-import { getCurrentRound, updateRoundTickets, type RaffleRound } from "@/lib/raffle-rounds"
+import { saveTransaction, hasEnteredRaffle, type Transaction } from "@/lib/actions/transaction-actions"
+import { getCurrentRound, type RaffleRound } from "@/lib/actions/raffle-actions"
 
 const rafflesData = [
   {
@@ -92,14 +92,13 @@ export default function RaffleDetailPage() {
 
   useEffect(() => {
     async function loadRound() {
-      const round = await getCurrentRound(params.id as string)
-      setCurrentRound(round)
-      setIsLoadingRound(false)
-
-      if (round) {
-        setTicketsSold(round.total_tickets_sold)
-        setTimeRemaining(calculateTimeRemaining(round.end_time))
+      const result = await getCurrentRound(Number.parseInt(params.id as string))
+      if (result.success && result.data) {
+        setCurrentRound(result.data)
+        setTicketsSold(result.data.total_tickets_sold || 0)
+        setTimeRemaining(calculateTimeRemaining(result.data.end_time))
       }
+      setIsLoadingRound(false)
     }
 
     loadRound()
@@ -131,10 +130,13 @@ export default function RaffleDetailPage() {
 
       setIsCheckingEntry(true)
       try {
-        // Check local storage for existing entries
-        const hasEntered = hasUserEnteredRaffle(account, Number.parseInt(raffle.id), currentRound?.id)
-        setHasAlreadyEntered(hasEntered)
-        console.log("[v0] User has already entered free raffle (from storage):", hasEntered)
+        if (currentRound?.id) {
+          const result = await hasEnteredRaffle(account, Number.parseInt(raffle.id), currentRound.id)
+          if (result.success) {
+            setHasAlreadyEntered(result.hasEntered)
+            console.log("[v0] User has already entered free raffle:", result.hasEntered)
+          }
+        }
       } catch (error) {
         console.log("[v0] Error checking user entry status:", error)
         setHasAlreadyEntered(false)
@@ -164,8 +166,8 @@ export default function RaffleDetailPage() {
     }
 
     if (raffle.priceValue === 0) {
-      const alreadyEntered = hasUserEnteredRaffle(account!, Number.parseInt(raffle.id), currentRound.id)
-      if (alreadyEntered || hasAlreadyEntered) {
+      const result = await hasEnteredRaffle(account!, Number.parseInt(raffle.id), currentRound.id)
+      if (result.success && (result.hasEntered || hasAlreadyEntered)) {
         setTxStatus("failed")
         setTxError("You have already entered this free raffle. Only one entry per wallet is allowed.")
         setHasAlreadyEntered(true)
@@ -235,9 +237,12 @@ export default function RaffleDetailPage() {
           ticketCount: actualQuantity,
           timestamp: Date.now(),
           status: "confirmed",
+          roundId: currentRound.id,
         }
-        saveTransaction(account, transaction)
-        console.log("[v0] Transaction saved to history")
+        const result = await saveTransaction(account, transaction)
+        if (result.success) {
+          console.log("[v0] Transaction saved to Supabase")
+        }
 
         if (raffle.priceValue === 0) {
           setHasAlreadyEntered(true)
@@ -246,9 +251,6 @@ export default function RaffleDetailPage() {
       }
 
       const newTicketsSold = Math.min(ticketsSold + actualQuantity, raffle.totalTickets)
-      const newPrizePool = currentRound.total_prize_pool + Number.parseFloat(amount)
-
-      await updateRoundTickets(currentRound.id, newTicketsSold, newPrizePool)
       setTicketsSold(newTicketsSold)
 
       await refreshBalance()
@@ -268,8 +270,9 @@ export default function RaffleDetailPage() {
           ticketCount: quantity,
           timestamp: Date.now(),
           status: "failed",
+          roundId: currentRound?.id,
         }
-        saveTransaction(account, transaction)
+        await saveTransaction(account, transaction)
       }
     } finally {
       setIsProcessing(false)

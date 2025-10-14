@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/client"
-
 export interface Transaction {
   hash: string
   type: "raffle_entry" | "prize_claim" | "refund"
@@ -11,120 +9,63 @@ export interface Transaction {
   roundId?: string
 }
 
-export async function saveTransaction(address: string, transaction: Transaction) {
+const TRANSACTIONS_STORAGE_KEY = "lotta_gg_transactions"
+
+function getStorageKey(address: string): string {
+  return `${TRANSACTIONS_STORAGE_KEY}_${address.toLowerCase()}`
+}
+
+export function saveTransaction(address: string, transaction: Transaction) {
   try {
-    const supabase = createClient()
-
-    const { error } = await supabase.from("transactions").insert({
-      user_address: address.toLowerCase(),
-      raffle_id: transaction.raffleId.toString(),
-      raffle_name: `Raffle ${transaction.raffleId}`,
-      amount: Number.parseFloat(transaction.amount),
-      ticket_count: transaction.ticketCount || 1,
-      tx_hash: transaction.hash,
-      status: transaction.status,
-      type: transaction.type,
-      round_id: transaction.roundId,
-      created_at: new Date(transaction.timestamp).toISOString(),
-    })
-
-    if (error) {
-      console.error("[v0] Error saving transaction to Supabase:", error)
-      throw error
-    }
-
-    console.log("[v0] Transaction saved to Supabase:", transaction)
+    const key = getStorageKey(address)
+    const transactions = JSON.parse(localStorage.getItem(key) || "[]")
+    transactions.push(transaction)
+    localStorage.setItem(key, JSON.stringify(transactions))
+    console.log("[v0] Transaction saved:", transaction)
   } catch (error) {
     console.error("[v0] Error saving transaction:", error)
-    throw error
   }
 }
 
-export async function getTransactions(address: string): Promise<Transaction[]> {
+export function getTransactions(address: string): Transaction[] {
   try {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_address", address.toLowerCase())
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("[v0] Error loading transactions from Supabase:", error)
-      return []
-    }
-
-    // Convert Supabase format to Transaction interface
-    return (
-      data?.map((tx) => ({
-        hash: tx.tx_hash,
-        type: tx.type as "raffle_entry" | "prize_claim" | "refund",
-        raffleId: Number.parseInt(tx.raffle_id),
-        amount: tx.amount.toString(),
-        ticketCount: tx.ticket_count,
-        timestamp: new Date(tx.created_at).getTime(),
-        status: tx.status as "pending" | "confirmed" | "failed",
-        roundId: tx.round_id,
-      })) || []
-    )
+    const key = getStorageKey(address)
+    return JSON.parse(localStorage.getItem(key) || "[]")
   } catch (error) {
     console.error("[v0] Error loading transactions:", error)
     return []
   }
 }
 
-export async function updateTransactionStatus(address: string, hash: string, status: "confirmed" | "failed") {
+export function updateTransactionStatus(address: string, hash: string, status: "confirmed" | "failed") {
   try {
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("transactions")
-      .update({ status })
-      .eq("user_address", address.toLowerCase())
-      .eq("tx_hash", hash)
-
-    if (error) {
-      console.error("[v0] Error updating transaction status in Supabase:", error)
-      throw error
-    }
-
-    console.log("[v0] Transaction status updated in Supabase:", { hash, status })
+    const key = getStorageKey(address)
+    const transactions = getTransactions(address)
+    const updatedTransactions = transactions.map((tx) => (tx.hash === hash ? { ...tx, status } : tx))
+    localStorage.setItem(key, JSON.stringify(updatedTransactions))
+    console.log("[v0] Transaction status updated:", { hash, status })
   } catch (error) {
     console.error("[v0] Error updating transaction status:", error)
-    throw error
   }
 }
 
-export async function hasUserEnteredRaffle(address: string, raffleId: number, roundId?: string): Promise<boolean> {
+export function hasUserEnteredRaffle(address: string, raffleId: number, roundId?: string): boolean {
   try {
-    const supabase = createClient()
+    const transactions = getTransactions(address)
 
-    let query = supabase
-      .from("transactions")
-      .select("id")
-      .eq("user_address", address.toLowerCase())
-      .eq("raffle_id", raffleId.toString())
-      .eq("type", "raffle_entry")
-      .eq("status", "confirmed")
+    // Filter for confirmed raffle entries for this specific raffle
+    const entries = transactions.filter(
+      (tx) => tx.type === "raffle_entry" && tx.status === "confirmed" && tx.raffleId === raffleId,
+    )
 
-    // If roundId is provided, filter by it
+    // If roundId is provided, check for that specific round
     if (roundId) {
-      query = query.eq("round_id", roundId)
-    } else {
-      // If no roundId, check for entries in the last 24 hours
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      query = query.gte("created_at", oneDayAgo)
+      return entries.some((tx) => tx.roundId === roundId)
     }
 
-    const { data, error } = await query.limit(1)
-
-    if (error) {
-      console.error("[v0] Error checking raffle entry in Supabase:", error)
-      return false
-    }
-
-    return (data?.length || 0) > 0
+    // Otherwise, check for entries in the last 24 hours
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
+    return entries.some((tx) => tx.timestamp >= oneDayAgo)
   } catch (error) {
     console.error("[v0] Error checking raffle entry:", error)
     return false

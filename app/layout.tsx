@@ -25,7 +25,12 @@ export const metadata: Metadata = {
   description: "Win big. Play fair. Have fun. Premium crypto raffle platform.",
   generator: "v0.app",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+    ],
+    apple: "/favicon.ico",
   },
 }
 

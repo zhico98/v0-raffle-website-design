@@ -70,9 +70,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const result = await getUserProfile(address)
       if (result.success && result.data) {
-        console.log("[v0] Profile loaded from Supabase for address:", address)
+        console.log("[v0] Profile loaded from Supabase for address:", address, result.data)
         const profile = {
           name: result.data.username || "",
+          email: result.data.email || "",
+          twitter: result.data.twitter || "",
           avatar: result.data.avatar_url || undefined,
         }
         setUserProfile(profile)
@@ -88,12 +90,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const saveProfileToSupabase = async (address: string, profile: UserProfile) => {
     try {
-      await updateUserProfileAction(address, {
+      console.log("[v0] Saving profile to Supabase:", { address, profile })
+      const result = await updateUserProfileAction(address, {
         username: profile.name,
+        email: profile.email,
+        twitter: profile.twitter,
         avatar_url: profile.avatar || undefined,
       })
-      console.log("[v0] Profile saved to Supabase for address:", address)
-      setUserProfile(profile)
+
+      if (result.success) {
+        console.log("[v0] Profile saved to Supabase successfully for address:", address)
+        setUserProfile(profile)
+      } else {
+        console.error("[v0] Failed to save profile to Supabase:", result.error)
+      }
     } catch (error) {
       console.error("[v0] Error saving profile to Supabase:", error)
     }

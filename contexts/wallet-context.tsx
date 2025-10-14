@@ -5,7 +5,7 @@ import { WalletConnectionModal } from "@/components/wallet-connection-modal"
 import { UserProfileModal } from "@/components/user-profile-modal"
 import { ProfileModal } from "@/components/profile-modal"
 import { web3Provider } from "@/lib/web3-provider"
-import { getUserProfile, updateUserProfile } from "@/lib/actions/user-actions"
+import { getUserProfile, updateUserProfile as updateUserProfileAction } from "@/lib/actions/user-actions"
 
 interface UserProfile {
   name: string
@@ -61,30 +61,39 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState<TransactionStatus>({ status: "idle" })
   const [balance, setBalance] = useState<string>("0")
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
 
   const loadProfileFromSupabase = async (address: string): Promise<UserProfile | null> => {
+    if (isLoadingProfile) return null
+    setIsLoadingProfile(true)
+
     try {
       const result = await getUserProfile(address)
       if (result.success && result.data) {
         console.log("[v0] Profile loaded from Supabase for address:", address)
-        return {
+        const profile = {
           name: result.data.username || "",
           avatar: result.data.avatar_url || undefined,
         }
+        setUserProfile(profile)
+        return profile
       }
     } catch (error) {
       console.error("[v0] Error loading profile from Supabase:", error)
+    } finally {
+      setIsLoadingProfile(false)
     }
     return null
   }
 
   const saveProfileToSupabase = async (address: string, profile: UserProfile) => {
     try {
-      await updateUserProfile(address, {
+      await updateUserProfileAction(address, {
         username: profile.name,
         avatar_url: profile.avatar || undefined,
       })
       console.log("[v0] Profile saved to Supabase for address:", address)
+      setUserProfile(profile)
     } catch (error) {
       console.error("[v0] Error saving profile to Supabase:", error)
     }
@@ -109,17 +118,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } else if (accounts[0] !== account) {
       setAccount(accounts[0])
       setIsConnected(true)
-      const savedProfile = await loadProfileFromSupabase(accounts[0])
-      if (savedProfile) {
-        setUserProfile(savedProfile)
-      }
+      await loadProfileFromSupabase(accounts[0])
       refreshBalance()
     }
   }
 
   const handleChainChanged = (chainId: string) => {
     console.log("[v0] Chain changed to:", chainId)
-    // Just log the change, don't reload the page
   }
 
   const checkIfWalletIsConnected = async () => {
@@ -159,10 +164,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsConnected(true)
 
         const savedProfile = await loadProfileFromSupabase(accounts[0])
-        if (savedProfile) {
-          setUserProfile(savedProfile)
-          console.log("[v0] Existing profile found for this wallet")
-        }
 
         try {
           await web3Provider.initialize()
@@ -203,8 +204,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     console.log("[v0] User profile saved:", profile)
   }
 
-  const updateUserProfile = async (profile: UserProfile) => {
-    setUserProfile(profile)
+  const updateProfile = async (profile: UserProfile) => {
     if (account) {
       await saveProfileToSupabase(account, profile)
     }
@@ -316,19 +316,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     checkIfWalletIsConnected()
   }, [])
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (account && isConnected) {
-        const savedProfile = await loadProfileFromSupabase(account)
-        if (savedProfile && !userProfile) {
-          setUserProfile(savedProfile)
-        }
-        refreshBalance()
-      }
-    }
-    loadProfile()
-  }, [account, isConnected])
-
   return (
     <WalletContext.Provider
       value={{
@@ -339,7 +326,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         balance,
         connectWallet,
         disconnectWallet,
-        updateUserProfile,
+        updateUserProfile: updateProfile,
         openProfileModal,
         sendTransaction,
         resetTransactionStatus,

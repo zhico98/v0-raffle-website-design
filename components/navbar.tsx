@@ -3,19 +3,25 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useWallet } from "@/contexts/wallet-context"
+import { useEffect, useState } from "react"
 
 export function Navbar() {
   const { account, isConnected, userProfile, connectWallet, disconnectWallet, openProfileModal } = useWallet()
+  const [displayName, setDisplayName] = useState<string>("")
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
-  const displayText = () => {
-    if (!isConnected || !account) return "Connect Wallet"
-    if (userProfile?.name) return userProfile.name
-    return formatAddress(account)
-  }
+  useEffect(() => {
+    if (!isConnected || !account) {
+      setDisplayName("Connect Wallet")
+    } else if (userProfile?.name) {
+      setDisplayName(userProfile.name)
+    } else {
+      setDisplayName(formatAddress(account))
+    }
+  }, [isConnected, account, userProfile])
 
   const handleWalletClick = () => {
     if (isConnected) {
@@ -102,7 +108,7 @@ export function Navbar() {
                   e.currentTarget.style.boxShadow = "0 0 10px rgba(240,192,64,0.25)"
                 }}
               >
-                {displayText()}
+                {displayName}
               </Button>
               {isConnected && userProfile?.avatar && (
                 <div

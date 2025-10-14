@@ -8,6 +8,7 @@ import { BackgroundEffects } from "@/components/background-effects"
 import { WinnersTicker } from "@/components/winners-ticker"
 import { ProvablyFairModal } from "@/components/provably-fair-modal"
 import { RulesModal } from "@/components/rules-modal"
+import { RaffleToast } from "@/components/raffle-toast"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Clock, Minus, Plus, CheckCircle2, Loader2 } from "lucide-react"
 import { useWallet } from "@/contexts/wallet-context"
@@ -82,6 +83,8 @@ export default function RaffleDetailPage() {
   const [txError, setTxError] = useState<string>("")
   const [hasAlreadyEntered, setHasAlreadyEntered] = useState(false)
   const [isCheckingEntry, setIsCheckingEntry] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState("")
 
   const raffle = rafflesData.find((r) => r.id === params.id) || rafflesData[0]
 
@@ -97,18 +100,29 @@ export default function RaffleDetailPage() {
         setCurrentRound(result.data)
         setTicketsSold(result.data.total_tickets_sold || 0)
         setTimeRemaining(calculateTimeRemaining(result.data.end_time))
+      } else {
+        console.log("[v0] No active round found, raffle may have ended")
       }
       setIsLoadingRound(false)
     }
 
     loadRound()
+
+    const roundRefreshInterval = setInterval(loadRound, 30000)
+
+    return () => clearInterval(roundRefreshInterval)
   }, [params.id])
 
   useEffect(() => {
     if (!currentRound) return
 
     const interval = setInterval(() => {
-      setTimeRemaining(calculateTimeRemaining(currentRound.end_time))
+      const newTimeRemaining = calculateTimeRemaining(currentRound.end_time)
+      setTimeRemaining(newTimeRemaining)
+
+      if (newTimeRemaining.isExpired && !timeRemaining.isExpired) {
+        console.log("[v0] Raffle has just expired")
+      }
     }, 1000)
 
     return () => clearInterval(interval)
@@ -148,7 +162,7 @@ export default function RaffleDetailPage() {
     checkUserEntry()
   }, [isConnected, account, raffle.id, raffle.priceValue, currentRound?.id])
 
-  const isSoldOut = ticketsSold >= raffle.totalTickets || timeRemaining.isExpired
+  const isSoldOut = !currentRound || ticketsSold >= raffle.totalTickets || timeRemaining.isExpired
   const ticketProgress = (ticketsSold / raffle.totalTickets) * 100
 
   const handleQuantityChange = (delta: number) => {
@@ -241,7 +255,16 @@ export default function RaffleDetailPage() {
         }
         const result = await saveTransaction(account, transaction)
         if (result.success) {
-          console.log("[v0] Transaction saved to Supabase")
+          console.log("[v0] Transaction saved to Supabase successfully")
+
+          setToastMessage(
+            raffle.priceValue === 0
+              ? "Successfully entered free raffle!"
+              : `Successfully purchased ${actualQuantity} ticket${actualQuantity > 1 ? "s" : ""}!`,
+          )
+          setShowToast(true)
+        } else {
+          console.error("[v0] Failed to save transaction to Supabase:", result.error)
         }
 
         if (raffle.priceValue === 0) {
@@ -305,6 +328,7 @@ export default function RaffleDetailPage() {
 
       <ProvablyFairModal isOpen={isProvablyFairOpen} onClose={() => setIsProvablyFairOpen(false)} />
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+      <RaffleToast message={toastMessage} isVisible={showToast} onClose={() => setShowToast(false)} />
 
       <div className="pt-16 pb-12 px-4">
         <div className="container mx-auto max-w-6xl">
@@ -324,10 +348,14 @@ export default function RaffleDetailPage() {
                     <CheckCircle2 className="w-16 h-16 text-[#F0C040] mx-auto" />
                     <div>
                       <p className="text-lg font-heading font-bold text-[#F0C040] mb-1">
-                        {timeRemaining.isExpired ? "ENDED" : "SOLD OUT"}
+                        {!currentRound ? "NO ACTIVE ROUND" : timeRemaining.isExpired ? "ENDED" : "SOLD OUT"}
                       </p>
                       <p className="text-sm text-[#b8b8b8]">
-                        {timeRemaining.isExpired ? "This round has ended" : "All tickets have been claimed"}
+                        {!currentRound
+                          ? "Waiting for next round to start"
+                          : timeRemaining.isExpired
+                            ? "This round has ended"
+                            : "All tickets have been claimed"}
                       </p>
                     </div>
                   </div>
@@ -455,7 +483,7 @@ export default function RaffleDetailPage() {
                   onClick={() => setIsRulesOpen(true)}
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs border-[rgba(255,215,0,0.2)] hover:border-[#F0C040] hover:bg-[rgba(255,215,0,0.1)] text-[#b8b8b8] hover:text-[#F0C040] bg-transparent h-9"
+                  className="flex-1 text-xs border-[rgba(255,215,0,0.2)] hover:border-[#F0C040] hover:bg-[rgba(255,215,0,0.1)]"
                 >
                   Rules
                 </Button>

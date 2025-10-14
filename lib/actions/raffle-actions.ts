@@ -87,6 +87,20 @@ export async function getCurrentRound(raffleId: number) {
     if (error) throw error
 
     const round = data && data.length > 0 ? data[0] : null
+
+    if (round) {
+      console.log("[v0] Current round found:", {
+        id: round.id,
+        raffleId: round.raffle_id,
+        startTime: round.start_time,
+        endTime: round.end_time,
+        now: now,
+        isActive: new Date(round.end_time) > new Date(now),
+      })
+    } else {
+      console.log("[v0] No active round found for raffle", raffleId, "at time", now)
+    }
+
     return { success: true, data: round }
   } catch (error) {
     console.error("[v0] Error fetching current round:", error)

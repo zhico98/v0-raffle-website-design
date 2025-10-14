@@ -22,8 +22,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "lotta.gg - Premium Crypto Raffle Platform",
-  description: "Raffle. Reveal. Reward. Premium crypto raffle platform with transparent blockchain-based draws.",
+  title: "lotta.gg",
+  description: "Raffle. Reveal. Reward.",
   generator: "v0.app",
   metadataBase: new URL("https://www.lotta.gg"),
   keywords: ["crypto", "raffle", "lottery", "blockchain", "win", "prizes", "ethereum"],
@@ -33,21 +33,21 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://www.lotta.gg",
     siteName: "lotta.gg",
-    title: "lotta.gg - Premium Crypto Raffle Platform",
-    description: "Raffle. Reveal. Reward. Premium crypto raffle platform with transparent blockchain-based draws.",
+    title: "lotta.gg",
+    description: "Raffle. Reveal. Reward.",
     images: [
       {
         url: "/favicon.png",
         width: 1200,
         height: 630,
-        alt: "lotta.gg - Premium Crypto Raffle Platform",
+        alt: "lotta.gg",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "lotta.gg - Premium Crypto Raffle Platform",
-    description: "Raffle. Reveal. Reward. Premium crypto raffle platform with transparent blockchain-based draws.",
+    title: "lotta.gg",
+    description: "Raffle. Reveal. Reward.",
     images: ["/favicon.png"],
   },
   icons: {

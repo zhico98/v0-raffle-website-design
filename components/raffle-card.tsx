@@ -8,6 +8,8 @@ import { Clock } from "lucide-react"
 import { useState, useEffect } from "react"
 import { calculateTimeRemaining } from "@/lib/countdown-utils"
 import { getCurrentRound, type RaffleRound } from "@/lib/actions/raffle-actions"
+import { hasEnteredRaffle } from "@/lib/actions/transaction-actions"
+import { useWallet } from "@/contexts/wallet-context"
 
 interface RaffleCardProps {
   raffle: {
@@ -32,6 +34,8 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
   const [currentRound, setCurrentRound] = useState<RaffleRound | null>(null)
   const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining(0))
   const [isLoading, setIsLoading] = useState(true)
+  const [hasAlreadyEntered, setHasAlreadyEntered] = useState(false)
+  const { account, isConnected } = useWallet()
 
   useEffect(() => {
     async function loadRound() {
@@ -68,6 +72,24 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
 
     return () => clearInterval(interval)
   }, [currentRound, raffle.id, timeRemaining.isExpired])
+
+  useEffect(() => {
+    async function checkUserEntry() {
+      if (!isConnected || !account || raffle.id !== 4 || raffle.price !== "FREE") {
+        setHasAlreadyEntered(false)
+        return
+      }
+
+      if (currentRound?.id) {
+        const result = await hasEnteredRaffle(account, raffle.id, currentRound.id)
+        if (result.success) {
+          setHasAlreadyEntered(result.hasEntered)
+        }
+      }
+    }
+
+    checkUserEntry()
+  }, [isConnected, account, raffle.id, raffle.price, currentRound?.id])
 
   const ticketsSold = currentRound?.total_tickets_sold || raffle.ticketsSold
   const percentage = (ticketsSold / raffle.totalTickets) * 100
@@ -140,25 +162,31 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
               <p className="font-heading text-xl font-bold text-[#F0C040]">{raffle.price}</p>
             </div>
             <Button
-              disabled={isSoldOut}
+              disabled={isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered)}
               className="h-8 px-4 rounded-lg font-semibold text-xs uppercase transition-all hover:scale-[1.03] disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: isSoldOut ? "#555" : "linear-gradient(90deg, #FFD700, #FFB800)",
-                color: isSoldOut ? "#999" : "#000",
-                boxShadow: isSoldOut ? "none" : "0 0 10px rgba(255,215,0,0.25)",
+                background:
+                  isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered)
+                    ? "#555"
+                    : "linear-gradient(90deg, #FFD700, #FFB800)",
+                color: isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered) ? "#999" : "#000",
+                boxShadow:
+                  isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered)
+                    ? "none"
+                    : "0 0 10px rgba(255,215,0,0.25)",
               }}
               onMouseEnter={(e) => {
-                if (!isSoldOut) {
+                if (!isSoldOut && !(raffle.price === "FREE" && hasAlreadyEntered)) {
                   e.currentTarget.style.boxShadow = "0 0 10px rgba(255,215,0,0.4)"
                 }
               }}
               onMouseLeave={(e) => {
-                if (!isSoldOut) {
+                if (!isSoldOut && !(raffle.price === "FREE" && hasAlreadyEntered)) {
                   e.currentTarget.style.boxShadow = "0 0 10px rgba(255,215,0,0.25)"
                 }
               }}
             >
-              {isSoldOut ? "Sold Out" : "Enter Now"}
+              {isSoldOut ? "Sold Out" : raffle.price === "FREE" && hasAlreadyEntered ? "Already Entered" : "Enter Now"}
             </Button>
           </div>
         </div>

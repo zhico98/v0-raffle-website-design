@@ -5,7 +5,7 @@ import { WalletConnectionModal } from "@/components/wallet-connection-modal"
 import { UserProfileModal } from "@/components/user-profile-modal"
 import { ProfileModal } from "@/components/profile-modal"
 import { web3Provider } from "@/lib/web3-provider"
-import { getUserProfile, upsertUserProfile } from "@/lib/supabase-storage"
+import { getUserProfile, updateUserProfile } from "@/lib/actions/user-actions"
 
 interface UserProfile {
   name: string
@@ -64,12 +64,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const loadProfileFromSupabase = async (address: string): Promise<UserProfile | null> => {
     try {
-      const profile = await getUserProfile(address)
-      if (profile) {
+      const result = await getUserProfile(address)
+      if (result.success && result.data) {
         console.log("[v0] Profile loaded from Supabase for address:", address)
         return {
-          name: profile.username || "",
-          avatar: profile.avatar_url || undefined,
+          name: result.data.username || "",
+          avatar: result.data.avatar_url || undefined,
         }
       }
     } catch (error) {
@@ -80,10 +80,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const saveProfileToSupabase = async (address: string, profile: UserProfile) => {
     try {
-      await upsertUserProfile({
-        wallet_address: address,
+      await updateUserProfile(address, {
         username: profile.name,
-        avatar_url: profile.avatar || null,
+        avatar_url: profile.avatar || undefined,
       })
       console.log("[v0] Profile saved to Supabase for address:", address)
     } catch (error) {

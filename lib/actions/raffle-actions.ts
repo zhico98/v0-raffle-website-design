@@ -18,38 +18,25 @@ export async function initializeRaffleRounds() {
   try {
     const supabase = await createClient()
 
-    const now = new Date().toISOString()
-    const { data: activeRounds, error: checkError } = await supabase
+    const now = new Date()
+    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+
+    // Delete all existing rounds to start fresh
+    const { error: deleteError } = await supabase
       .from("raffle_rounds")
-      .select("raffle_id")
-      .eq("status", "active")
-      .gte("end_time", now)
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000") // Delete all
 
-    if (checkError) throw checkError
-
-    console.log("[v0] Active rounds found:", activeRounds?.length || 0)
-
-    // Get list of raffle IDs that need initialization
-    const raffleIds = [1, 2, 3, 4]
-    const activeRaffleIds = new Set(activeRounds?.map((r) => r.raffle_id) || [])
-    const rafflesNeedingInit = raffleIds.filter((id) => !activeRaffleIds.has(id.toString()))
-
-    console.log("[v0] Raffles needing initialization:", rafflesNeedingInit)
-
-    // If all raffles have active rounds, don't initialize
-    if (rafflesNeedingInit.length === 0) {
-      console.log("[v0] All raffles have active rounds")
-      return { success: true, message: "All raffles have active rounds" }
+    if (deleteError) {
+      console.error("[v0] Error deleting old rounds:", deleteError)
     }
 
-    // Create rounds only for raffles that need them
-    const startTime = new Date()
-    const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000)
-
-    const roundsToInsert = rafflesNeedingInit.map((raffleId) => ({
+    // Create fresh 24-hour rounds for all raffles
+    const raffleIds = [1, 2, 3, 4]
+    const roundsToInsert = raffleIds.map((raffleId) => ({
       raffle_id: raffleId.toString(),
       round_number: 1,
-      start_time: startTime.toISOString(),
+      start_time: now.toISOString(),
       end_time: endTime.toISOString(),
       status: "active",
       total_tickets_sold: 0,
@@ -60,8 +47,8 @@ export async function initializeRaffleRounds() {
 
     if (insertError) throw insertError
 
-    console.log("[v0] Successfully initialized", rafflesNeedingInit.length, "raffle rounds")
-    return { success: true, message: `Initialized ${rafflesNeedingInit.length} raffle rounds` }
+    console.log("[v0] Successfully reset all raffle rounds to 24 hours from now")
+    return { success: true, message: "All raffle rounds reset to 24 hours" }
   } catch (error) {
     console.error("[v0] Error initializing raffle rounds:", error)
     return { success: false, message: "Failed to initialize rounds" }
@@ -134,5 +121,27 @@ export async function createNewRound(raffleId: number, roundNumber: number) {
   } catch (error) {
     console.error("[v0] Error creating new round:", error)
     return { success: false, data: null }
+  }
+}
+
+export async function updateRoundTicketCount(roundId: string, ticketCount: number) {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from("raffle_rounds")
+      .update({
+        total_tickets_sold: ticketCount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", roundId)
+
+    if (error) throw error
+
+    console.log("[v0] Updated round ticket count:", { roundId, ticketCount })
+    return { success: true }
+  } catch (error) {
+    console.error("[v0] Error updating round ticket count:", error)
+    return { success: false, error }
   }
 }

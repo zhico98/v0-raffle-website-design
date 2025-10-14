@@ -15,7 +15,7 @@ import { useWallet } from "@/contexts/wallet-context"
 import { calculateTimeRemaining } from "@/lib/countdown-utils"
 import { raffleContract } from "@/lib/raffle-contract"
 import { saveTransaction, hasEnteredRaffle, type Transaction } from "@/lib/actions/transaction-actions"
-import { getCurrentRound, type RaffleRound } from "@/lib/actions/raffle-actions"
+import { getCurrentRound, updateRoundTicketCount, type RaffleRound } from "@/lib/actions/raffle-actions"
 
 const rafflesData = [
   {
@@ -275,6 +275,13 @@ export default function RaffleDetailPage() {
 
       const newTicketsSold = Math.min(ticketsSold + actualQuantity, raffle.totalTickets)
       setTicketsSold(newTicketsSold)
+
+      const updateResult = await updateRoundTicketCount(currentRound.id, newTicketsSold)
+      if (updateResult.success) {
+        console.log("[v0] Ticket count updated in database")
+      } else {
+        console.error("[v0] Failed to update ticket count in database")
+      }
 
       await refreshBalance()
 

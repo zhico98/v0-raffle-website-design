@@ -31,10 +31,10 @@ export function RaffleToast({ message, isVisible, onClose }: RaffleToastProps) {
         show ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       }`}
     >
-      <div className="bg-gradient-to-r from-black to-[#1a1a1a] border-2 border-[#FFD700] rounded-lg shadow-lg p-3 pr-10 min-w-[280px] max-w-[400px]">
+      <div className="bg-gradient-to-r from-black to-[#1a1a1a] border-2 border-[#9945FF] rounded-lg shadow-lg p-3 pr-10 min-w-[280px] max-w-[400px]">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">
-            <CheckCircle2 className="w-5 h-5 text-[#FFD700]" />
+            <CheckCircle2 className="w-5 h-5 text-[#9945FF]" />
           </div>
           <p className="text-sm font-medium text-white">{message}</p>
         </div>

@@ -1,24 +1,24 @@
-// BNB Smart Chain Configuration
+// Solana Configuration
 export const BLOCKCHAIN_CONFIG = {
-  chainId: 56, // BNB Smart Chain Mainnet
-  chainIdHex: "0x38",
-  chainName: "BNB Smart Chain",
+  chainId: 101, // Solana Mainnet
+  chainIdHex: "0x65",
+  chainName: "Solana",
   nativeCurrency: {
-    name: "BNB",
-    symbol: "BNB",
-    decimals: 18,
+    name: "SOL",
+    symbol: "SOL",
+    decimals: 9, // Solana uses 9 decimals
   },
-  rpcUrls: ["https://bsc-dataseed.binance.org/"],
-  blockExplorerUrls: ["https://bscscan.com/"],
+  rpcUrls: ["https://api.mainnet-beta.solana.com/"],
+  blockExplorerUrls: ["https://solscan.io/"],
 }
 
 // Raffle Contract Configuration
 export const RAFFLE_CONTRACT = {
   // This will be your deployed smart contract address
-  address: process.env.NEXT_PUBLIC_RAFFLE_CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000",
+  address: process.env.NEXT_PUBLIC_RAFFLE_CONTRACT_ADDRESS || "11111111111111111111111111111111",
 
   // Raffle settings
-  ticketPrice: "0.01", // 0.01 BNB per ticket
+  ticketPrice: "0.1", // 0.1 SOL per ticket
   maxTicketsPerUser: 100,
   raffleDuration: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
 }

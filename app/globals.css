@@ -4,31 +4,31 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated to cosmic space casino colors */
+  /* Updated to Solana colors - green and purple */
   --background: #050505;
   --foreground: #ededed;
   --card: rgba(255, 255, 255, 0.04);
   --card-foreground: #ededed;
   --popover: rgba(255, 255, 255, 0.03);
   --popover-foreground: #ededed;
-  /* Updated primary color to bright vibrant gold */
-  --primary: #ffd700;
-  --primary-hover: #ffc107;
-  --primary-foreground: #0a0a0f;
+  /* Changed from gold to Solana green */
+  --primary: #9945ff;
+  --primary-hover: #7d2edb;
+  --primary-foreground: #ffffff;
   --secondary: #b8b8b8;
   --secondary-foreground: #ededed;
   --muted: #777;
   --muted-foreground: #b8b8b8;
-  /* Updated accent to match new bright gold */
-  --accent: #ffd700;
-  --accent-foreground: #0a0a0f;
+  /* Changed accent to Solana purple */
+  --accent: #9945ff;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: #1c1c1c;
   --border-subtle: #2b2b2b;
   --input: #1a1a1a;
-  /* Updated ring to match new bright gold */
-  --ring: #ffd700;
+  /* Changed ring to Solana green */
+  --ring: #9945ff;
   --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -145,7 +145,7 @@
   }
 
   h1 {
-    text-shadow: 0 0 12px rgba(255, 200, 80, 0.25);
+    text-shadow: 0 0 12px rgba(153, 69, 255, 0.25);
   }
 
   /* All caps for buttons */
@@ -170,10 +170,10 @@
 @keyframes subtle-glow {
   0%,
   100% {
-    box-shadow: 0 0 12px rgba(245, 211, 108, 0.2);
+    box-shadow: 0 0 12px rgba(153, 69, 255, 0.2);
   }
   50% {
-    box-shadow: 0 0 16px rgba(245, 211, 108, 0.3);
+    box-shadow: 0 0 16px rgba(153, 69, 255, 0.3);
   }
 }
 

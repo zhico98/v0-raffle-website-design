@@ -22,7 +22,7 @@ export function RaffleFilters() {
     <section className="px-4 sm:px-6 lg:px-8 mb-8">
       <div className="container mx-auto">
         <div
-          className="rounded-2xl p-6 border border-[rgba(255,215,0,0.15)]"
+          className="rounded-2xl p-6 border border-[rgba(153,69,255,0.15)]"
           style={{
             background: "rgba(10, 10, 15, 0.6)",
             backdropFilter: "blur(20px)",
@@ -39,8 +39,8 @@ export function RaffleFilters() {
                 onClick={() => setActiveCategory("all")}
                 className={`rounded-full px-4 h-9 text-xs uppercase font-semibold transition-all ${
                   activeCategory === "all"
-                    ? "bg-gradient-to-r from-[#FFD700] to-[#FFB800] text-black border-0"
-                    : "bg-transparent border border-[rgba(255,215,0,0.3)] text-[#b8b8b8] hover:text-[#FFD95E] hover:border-[rgba(255,215,0,0.5)]"
+                    ? "bg-gradient-to-r from-[#9945FF] to-[#7928CA] text-white border-0"
+                    : "bg-transparent border border-[rgba(153,69,255,0.3)] text-[#b8b8b8] hover:text-[#9945FF] hover:border-[rgba(153,69,255,0.5)]"
                 }`}
               >
                 All
@@ -51,8 +51,8 @@ export function RaffleFilters() {
                 onClick={() => setActiveCategory("crypto")}
                 className={`rounded-full px-4 h-9 text-xs uppercase font-semibold transition-all ${
                   activeCategory === "crypto"
-                    ? "bg-gradient-to-r from-[#FFD700] to-[#FFB800] text-black border-0"
-                    : "bg-transparent border border-[rgba(255,215,0,0.3)] text-[#b8b8b8] hover:text-[#FFD95E] hover:border-[rgba(255,215,0,0.5)]"
+                    ? "bg-gradient-to-r from-[#9945FF] to-[#7928CA] text-white border-0"
+                    : "bg-transparent border border-[rgba(153,69,255,0.3)] text-[#b8b8b8] hover:text-[#9945FF] hover:border-[rgba(153,69,255,0.5)]"
                 }`}
               >
                 Crypto
@@ -65,7 +65,7 @@ export function RaffleFilters() {
                   type="number"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-20 h-9 bg-black/40 border-[rgba(255,215,0,0.2)] text-white text-xs rounded-lg"
+                  className="w-20 h-9 bg-black/40 border-[rgba(153,69,255,0.2)] text-white text-xs rounded-lg"
                   placeholder="0"
                 />
                 <span className="text-[#b8b8b8]">-</span>
@@ -73,7 +73,7 @@ export function RaffleFilters() {
                   type="number"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-20 h-9 bg-black/40 border-[rgba(255,215,0,0.2)] text-white text-xs rounded-lg"
+                  className="w-20 h-9 bg-black/40 border-[rgba(153,69,255,0.2)] text-white text-xs rounded-lg"
                   placeholder="9999"
                 />
               </div>
@@ -82,24 +82,24 @@ export function RaffleFilters() {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full px-4 h-9 text-xs uppercase font-semibold bg-transparent border border-[rgba(255,215,0,0.3)] text-[#b8b8b8] hover:text-[#FFD95E] hover:border-[rgba(255,215,0,0.5)]"
+                className="rounded-full px-4 h-9 text-xs uppercase font-semibold bg-transparent border border-[rgba(153,69,255,0.3)] text-[#b8b8b8] hover:text-[#9945FF] hover:border-[rgba(153,69,255,0.5)]"
               >
-                BNB
+                SOL
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full px-4 h-9 text-xs uppercase font-semibold bg-transparent border border-[rgba(255,215,0,0.3)] text-[#b8b8b8] hover:text-[#FFD95E] hover:border-[rgba(255,215,0,0.5)]"
+                className="rounded-full px-4 h-9 text-xs uppercase font-semibold bg-transparent border border-[rgba(153,69,255,0.3)] text-[#b8b8b8] hover:text-[#9945FF] hover:border-[rgba(153,69,255,0.5)]"
               >
                 Sort
               </Button>
 
               {/* Ending Soon dropdown */}
               <Select defaultValue="ending-soon">
-                <SelectTrigger className="w-[140px] h-9 rounded-full bg-black/40 border-[rgba(255,215,0,0.2)] text-white text-xs">
+                <SelectTrigger className="w-[140px] h-9 rounded-full bg-black/40 border-[rgba(153,69,255,0.2)] text-white text-xs">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0a0f] border-[rgba(255,215,0,0.2)]">
+                <SelectContent className="bg-[#0a0a0f] border-[rgba(153,69,255,0.2)]">
                   <SelectItem value="ending-soon" className="text-white">
                     Ending Soon
                   </SelectItem>
@@ -120,13 +120,13 @@ export function RaffleFilters() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search prizes..."
-                className="flex-1 lg:w-64 h-9 bg-black/40 border-[rgba(255,215,0,0.2)] text-white text-sm rounded-lg placeholder:text-[#666]"
+                className="flex-1 lg:w-64 h-9 bg-black/40 border-[rgba(153,69,255,0.2)] text-white text-sm rounded-lg placeholder:text-[#666]"
               />
               <Button
                 onClick={handleReset}
                 variant="outline"
                 size="sm"
-                className="rounded-full px-5 h-9 text-xs uppercase font-semibold bg-transparent border border-[rgba(255,215,0,0.3)] text-[#b8b8b8] hover:text-[#FFD95E] hover:border-[rgba(255,215,0,0.5)]"
+                className="rounded-full px-5 h-9 text-xs uppercase font-semibold bg-transparent border border-[rgba(153,69,255,0.3)] text-[#b8b8b8] hover:text-[#9945FF] hover:border-[rgba(153,69,255,0.5)]"
               >
                 Reset
               </Button>

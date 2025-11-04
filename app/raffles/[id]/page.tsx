@@ -20,50 +20,50 @@ import { getCurrentRound, updateRoundTicketCount, type RaffleRound } from "@/lib
 const rafflesData = [
   {
     id: "3",
-    title: "0.23 BNB",
-    price: "0.0194 BNB",
-    priceValue: 0.0194,
-    prize: "0.23 BNB",
+    title: "3 SOL",
+    price: "0.25 SOL",
+    priceValue: 0.25,
+    prize: "3 SOL",
     image: "/raffle-icon.png",
     totalTickets: 20,
     ticketsSold: 0,
-    description: "Win 0.23 BNB! 20 Tickets available at 0.0194 BNB Each. Enter now for your chance to win!",
+    description: "Win 3 SOL! 20 Tickets available at 0.25 SOL Each. Enter now for your chance to win!",
     isLocked: false,
   },
   {
     id: "2",
-    title: "0.0777 BNB",
-    price: "0.0078 BNB",
-    priceValue: 0.0078,
-    prize: "0.0777 BNB",
+    title: "1 SOL",
+    price: "0.1 SOL",
+    priceValue: 0.1,
+    prize: "1 SOL",
     image: "/raffle-icon.png",
     totalTickets: 50,
     ticketsSold: 0,
-    description: "Win 0.0777 BNB! 50 Tickets available at 0.0078 BNB Each. Enter now for your chance to win!",
+    description: "Win 1 SOL! 50 Tickets available at 0.1 SOL Each. Enter now for your chance to win!",
     isLocked: false,
   },
   {
     id: "1",
-    title: "0.0389 BNB",
-    price: "0.0023 BNB",
-    priceValue: 0.0023,
-    prize: "0.0389 BNB",
+    title: "0.5 SOL",
+    price: "0.03 SOL",
+    priceValue: 0.03,
+    prize: "0.5 SOL",
     image: "/raffle-icon.png",
     totalTickets: 80,
     ticketsSold: 0,
-    description: "Win 0.0389 BNB! 80 Tickets available at 0.0023 BNB Each. Enter now for your chance to win!",
+    description: "Win 0.5 SOL! 80 Tickets available at 0.03 SOL Each. Enter now for your chance to win!",
     isLocked: false,
   },
   {
     id: "4",
-    title: "0.322 BNB",
+    title: "4 SOL",
     price: "FREE",
     priceValue: 0,
-    prize: "0.322 BNB",
+    prize: "4 SOL",
     image: "/raffle-icon.png",
     totalTickets: 100,
     ticketsSold: 0,
-    description: "Win 0.322 BNB! Completely FREE entry. One entry per wallet. 100 Tickets available!",
+    description: "Win 4 SOL! Completely FREE entry. One entry per wallet. 100 Tickets available!",
     isLocked: false,
   },
 ]
@@ -216,27 +216,12 @@ export default function RaffleDetailPage() {
         txHash = await raffleContract.enterRaffle(Number.parseInt(params.id as string), actualQuantity)
         console.log("[v0] Raffle entry successful! Transaction hash:", txHash)
       } catch (contractError: any) {
-        console.log("[v0] Smart contract not deployed, using direct transfer fallback")
-        const FALLBACK_ADDRESS = "0xac121224D3F41fEc0f6444b1cEBB8feE81988664"
-        txHash = await new Promise((resolve, reject) => {
-          ;(async () => {
-            try {
-              const hash = await window.ethereum.request({
-                method: "eth_sendTransaction",
-                params: [
-                  {
-                    from: account,
-                    to: FALLBACK_ADDRESS,
-                    value: `0x${BigInt(Math.floor(Number.parseFloat(amount) * 1e18)).toString(16)}`,
-                  },
-                ],
-              })
-              resolve(hash)
-            } catch (err) {
-              reject(err)
-            }
-          })()
-        })
+        // Check if user rejected the transaction
+        if (contractError.message?.includes("User rejected") || contractError.code === 4001) {
+          throw new Error("Transaction cancelled by user")
+        }
+        // For any other error, throw it
+        throw contractError
       }
 
       setTxHash(txHash)
@@ -289,7 +274,14 @@ export default function RaffleDetailPage() {
     } catch (error: any) {
       console.error("[v0] Purchase failed:", error)
       setTxStatus("failed")
-      setTxError(error.message || "Transaction failed. Please try again.")
+
+      if (error.message?.includes("cancelled by user") || error.message?.includes("User rejected")) {
+        setTxError("Transaction cancelled. Please try again when ready.")
+      } else if (error.message?.includes("Insufficient funds")) {
+        setTxError("Insufficient SOL balance. Please add funds to your wallet.")
+      } else {
+        setTxError(error.message || "Transaction failed. Please try again.")
+      }
 
       if (account && txHash) {
         const transaction: Transaction = {
@@ -310,7 +302,7 @@ export default function RaffleDetailPage() {
   }
 
   const totalCost = raffle.priceValue * quantity
-  const estimatedGas = 0.001
+  const estimatedGas = 0.004
   const totalWithGas = totalCost + estimatedGas
 
   if (isLoadingRound) {
@@ -320,7 +312,7 @@ export default function RaffleDetailPage() {
         <Navbar />
         <div className="pt-32 flex items-center justify-center">
           <div className="text-center">
-            <Clock className="w-16 h-16 text-[#F0C040] animate-spin mx-auto mb-4" />
+            <Clock className="w-16 h-16 text-[#9945ff] animate-spin mx-auto mb-4" />
             <p className="text-[#b8b8b8] font-heading">Loading raffle...</p>
           </div>
         </div>
@@ -341,7 +333,7 @@ export default function RaffleDetailPage() {
         <div className="container mx-auto max-w-6xl">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[#b8b8b8] hover:text-[#F0C040] transition-colors mb-2 group"
+            className="flex items-center gap-2 text-[#b8b8b8] hover:text-[#9945ff] transition-colors mb-2 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span className="font-heading text-sm font-bold">{raffle.price}</span>
@@ -352,9 +344,9 @@ export default function RaffleDetailPage() {
               {isSoldOut && (
                 <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-10 flex items-center justify-center">
                   <div className="text-center space-y-3">
-                    <CheckCircle2 className="w-16 h-16 text-[#F0C040] mx-auto" />
+                    <CheckCircle2 className="w-16 h-16 text-[#9945ff] mx-auto" />
                     <div>
-                      <p className="text-lg font-heading font-bold text-[#F0C040] mb-1">
+                      <p className="text-lg font-heading font-bold text-[#9945ff] mb-1">
                         {!currentRound ? "NO ACTIVE ROUND" : timeRemaining.isExpired ? "ENDED" : "SOLD OUT"}
                       </p>
                       <p className="text-sm text-[#b8b8b8]">
@@ -368,13 +360,13 @@ export default function RaffleDetailPage() {
                   </div>
                 </div>
               )}
-              <Image src={raffle.image || "/placeholder.svg"} alt={raffle.title} fill className="object-cover" />
+              <Image src="/raffle-prize.png" alt={raffle.title} fill className="object-cover scale-[1.25]" />
             </div>
 
             <div className="flex items-center justify-center h-full min-h-[450px]">
-              <div className="bg-black/60 backdrop-blur-sm border-2 border-[rgba(255,215,0,0.2)] rounded-2xl p-8 w-full">
+              <div className="bg-black/60 backdrop-blur-sm border-2 border-[rgba(153,69,255,0.2)] rounded-2xl p-8 w-full">
                 <div className="text-center mb-6">
-                  <Clock className="w-12 h-12 text-[#F0C040] mx-auto mb-3" />
+                  <Clock className="w-12 h-12 text-[#9945ff] mx-auto mb-3" />
                   <p className="text-sm text-[#b8b8b8] uppercase tracking-wider font-semibold">
                     {timeRemaining.isExpired ? "Raffle Ended" : "Time Remaining"}
                   </p>
@@ -383,8 +375,8 @@ export default function RaffleDetailPage() {
 
                 <div className="flex justify-center gap-3">
                   <div className="flex flex-col items-center">
-                    <div className="bg-[#0a0a0a] border border-[rgba(255,215,0,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
-                      <p className="font-heading text-4xl font-bold text-[#F0C040]">
+                    <div className="bg-[#0a0a0a] border border-[rgba(153,69,255,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
+                      <p className="font-heading text-4xl font-bold text-[#9945ff]">
                         {String(timeRemaining.days || 0).padStart(2, "0")}
                       </p>
                     </div>
@@ -392,12 +384,12 @@ export default function RaffleDetailPage() {
                   </div>
 
                   <div className="flex items-center pb-6">
-                    <span className="font-heading text-3xl font-bold text-[#F0C040]">:</span>
+                    <span className="font-heading text-3xl font-bold text-[#9945ff]">:</span>
                   </div>
 
                   <div className="flex flex-col items-center">
-                    <div className="bg-[#0a0a0a] border border-[rgba(255,215,0,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
-                      <p className="font-heading text-4xl font-bold text-[#F0C040]">
+                    <div className="bg-[#0a0a0a] border border-[rgba(153,69,255,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
+                      <p className="font-heading text-4xl font-bold text-[#9945ff]">
                         {String(timeRemaining.hours || 0).padStart(2, "0")}
                       </p>
                     </div>
@@ -405,12 +397,12 @@ export default function RaffleDetailPage() {
                   </div>
 
                   <div className="flex items-center pb-6">
-                    <span className="font-heading text-3xl font-bold text-[#F0C040]">:</span>
+                    <span className="font-heading text-3xl font-bold text-[#9945ff]">:</span>
                   </div>
 
                   <div className="flex flex-col items-center">
-                    <div className="bg-[#0a0a0a] border border-[rgba(255,215,0,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
-                      <p className="font-heading text-4xl font-bold text-[#F0C040]">
+                    <div className="bg-[#0a0a0a] border border-[rgba(153,69,255,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
+                      <p className="font-heading text-4xl font-bold text-[#9945ff]">
                         {String(timeRemaining.minutes || 0).padStart(2, "0")}
                       </p>
                     </div>
@@ -418,12 +410,12 @@ export default function RaffleDetailPage() {
                   </div>
 
                   <div className="flex items-center pb-6">
-                    <span className="font-heading text-3xl font-bold text-[#F0C040]">:</span>
+                    <span className="font-heading text-3xl font-bold text-[#9945ff]">:</span>
                   </div>
 
                   <div className="flex flex-col items-center">
-                    <div className="bg-[#0a0a0a] border border-[rgba(255,215,0,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
-                      <p className="font-heading text-4xl font-bold text-[#F0C040]">
+                    <div className="bg-[#0a0a0a] border border-[rgba(153,69,255,0.3)] rounded-xl px-5 py-4 min-w-[90px]">
+                      <p className="font-heading text-4xl font-bold text-[#9945ff]">
                         {String(timeRemaining.seconds || 0).padStart(2, "0")}
                       </p>
                     </div>
@@ -436,17 +428,17 @@ export default function RaffleDetailPage() {
 
           <div className="grid lg:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <div className="bg-black/40 backdrop-blur-sm border border-[rgba(255,215,0,0.1)] rounded-lg p-3">
-                <h3 className="font-heading text-sm font-bold text-[#F0C040] mb-2">{raffle.title}</h3>
+              <div className="bg-black/40 backdrop-blur-sm border border-[rgba(153,69,255,0.1)] rounded-lg p-3">
+                <h3 className="font-heading text-sm font-bold text-[#9945ff] mb-2">{raffle.title}</h3>
                 <p className="text-[10px] text-[#b8b8b8] leading-relaxed mb-2">{raffle.description}</p>
                 <div className="flex items-center justify-between text-[9px] text-[#777] mb-2">
                   <span>Total Slots: {raffle.totalTickets}</span>
                   <span>Remaining: {raffle.totalTickets - ticketsSold}</span>
                 </div>
                 <div className="space-y-1">
-                  <div className="w-full bg-[#0a0a0a] rounded-full h-2 border border-[rgba(255,215,0,0.2)] overflow-hidden">
+                  <div className="w-full bg-[#0a0a0a] rounded-full h-2 border border-[rgba(153,69,255,0.2)] overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFB800] transition-all duration-500 ease-out"
+                      className="h-full bg-gradient-to-r from-[#9945ff] to-[#7d2edb] transition-all duration-500 ease-out"
                       style={{ width: `${ticketProgress}%` }}
                     />
                   </div>
@@ -457,17 +449,17 @@ export default function RaffleDetailPage() {
                 </div>
               </div>
 
-              <div className="bg-black/60 backdrop-blur-sm border border-[rgba(255,215,0,0.1)] rounded-lg p-2">
+              <div className="bg-black/60 backdrop-blur-sm border border-[rgba(153,69,255,0.1)] rounded-lg p-2">
                 <p className="text-[9px] text-[#777] uppercase tracking-wide mb-0.5">
                   {raffle.priceValue === 0 ? "Entry Fee" : "Ticket Price"}
                 </p>
-                <p className="font-heading text-lg font-bold text-[#F0C040]">{raffle.price}</p>
+                <p className="font-heading text-lg font-bold text-[#9945ff]">{raffle.price}</p>
               </div>
 
-              <div className="bg-black/60 backdrop-blur-sm border border-[rgba(255,215,0,0.1)] rounded-lg p-2">
+              <div className="bg-black/60 backdrop-blur-sm border border-[rgba(153,69,255,0.1)] rounded-lg p-2">
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-[9px] text-[#777] uppercase tracking-wide">Prize</p>
-                  <p className="font-heading text-sm font-bold text-[#F0C040]">{raffle.prize}</p>
+                  <p className="font-heading text-sm font-bold text-[#9945ff]">{raffle.prize}</p>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-[9px] text-[#777] uppercase tracking-wide">Tickets</p>
@@ -482,7 +474,7 @@ export default function RaffleDetailPage() {
                   onClick={() => setIsProvablyFairOpen(true)}
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs border-[rgba(255,215,0,0.2)] hover:border-[#F0C040] hover:bg-[rgba(255,215,0,0.1)] text-[#b8b8b8] hover:text-[#F0C040] bg-transparent h-9"
+                  className="flex-1 text-xs border-[rgba(153,69,255,0.2)] hover:border-[#9945ff] hover:bg-[rgba(153,69,255,0.1)] text-[#b8b8b8] hover:text-[#9945ff] bg-transparent h-9"
                 >
                   Provably Fair
                 </Button>
@@ -490,7 +482,7 @@ export default function RaffleDetailPage() {
                   onClick={() => setIsRulesOpen(true)}
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs border-[rgba(255,215,0,0.2)] hover:border-[#F0C040] hover:bg-[rgba(255,215,0,0.1)]"
+                  className="flex-1 text-xs border-[rgba(153,69,255,0.2)] hover:border-[#9945ff] hover:bg-[rgba(153,69,255,0.1)]"
                 >
                   Rules
                 </Button>
@@ -498,7 +490,7 @@ export default function RaffleDetailPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="bg-black/60 backdrop-blur-sm border border-[rgba(255,215,0,0.1)] rounded-lg p-2 space-y-1.5">
+              <div className="bg-black/60 backdrop-blur-sm border border-[rgba(153,69,255,0.1)] rounded-lg p-2 space-y-1.5">
                 {raffle.priceValue !== 0 && (
                   <div className="flex items-center gap-2">
                     <Button
@@ -506,25 +498,25 @@ export default function RaffleDetailPage() {
                       size="icon"
                       onClick={() => handleQuantityChange(-1)}
                       disabled={isProcessing || txStatus === "pending" || isSoldOut}
-                      className="h-7 w-7 border-[rgba(255,215,0,0.2)] hover:border-[#F0C040] hover:bg-[rgba(255,215,0,0.1)]"
+                      className="h-7 w-7 border-[rgba(153,69,255,0.2)] hover:border-[#9945ff] hover:bg-[rgba(153,69,255,0.1)]"
                     >
-                      <Minus className="w-3 h-3 text-[#F0C040]" />
+                      <Minus className="w-3 h-3 text-[#9945ff]" />
                     </Button>
                     <input
                       type="number"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
                       disabled={isProcessing || txStatus === "pending" || isSoldOut}
-                      className="flex-1 bg-[#0a0a0a] border border-[rgba(255,215,0,0.2)] rounded-lg px-2 py-1 text-center font-heading text-sm font-bold text-foreground focus:outline-none focus:border-[#F0C040] disabled:opacity-50"
+                      className="flex-1 bg-[#0a0a0a] border border-[rgba(153,69,255,0.2)] rounded-lg px-2 py-1 text-center font-heading text-sm font-bold text-foreground focus:outline-none focus:border-[#9945ff] disabled:opacity-50"
                     />
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => handleQuantityChange(1)}
                       disabled={isProcessing || txStatus === "pending" || isSoldOut}
-                      className="h-7 w-7 border-[rgba(255,215,0,0.2)] hover:border-[#F0C040] hover:bg-[rgba(255,215,0,0.1)]"
+                      className="h-7 w-7 border-[rgba(153,69,255,0.2)] hover:border-[#9945ff] hover:bg-[rgba(153,69,255,0.1)]"
                     >
-                      <Plus className="w-3 h-3 text-[#F0C040]" />
+                      <Plus className="w-3 h-3 text-[#9945ff]" />
                     </Button>
                   </div>
                 )}
@@ -543,12 +535,12 @@ export default function RaffleDetailPage() {
                     background:
                       isSoldOut || (raffle.priceValue === 0 && hasAlreadyEntered)
                         ? "#555"
-                        : "linear-gradient(90deg, #FFD700, #FFB800)",
-                    color: isSoldOut || (raffle.priceValue === 0 && hasAlreadyEntered) ? "#999" : "#000",
+                        : "linear-gradient(90deg, #9945ff, #7d2edb)",
+                    color: "#ffffff",
                     boxShadow:
                       isSoldOut || (raffle.priceValue === 0 && hasAlreadyEntered)
                         ? "none"
-                        : "0 0 10px rgba(255,215,0,0.25)",
+                        : "0 0 10px rgba(153,69,255,0.25)",
                   }}
                 >
                   {isCheckingEntry ? (
@@ -580,27 +572,9 @@ export default function RaffleDetailPage() {
                 </Button>
 
                 {raffle.priceValue === 0 && hasAlreadyEntered && txStatus === "idle" && (
-                  <div className="text-[9px] text-[#F0C040] text-center">
+                  <div className="text-[9px] text-[#9945ff] text-center">
                     <p>You have already entered this free raffle</p>
                     <p>Only one entry per wallet is allowed</p>
-                  </div>
-                )}
-
-                {txStatus === "idle" && isConnected && !isSoldOut && !hasAlreadyEntered && (
-                  <div className="text-[9px] text-[#777] space-y-0.5">
-                    <p>Wallet Balance: {Number.parseFloat(balance).toFixed(4)} BNB</p>
-                    {raffle.priceValue === 0 ? (
-                      <>
-                        <p>Entry: FREE (No payment required)</p>
-                        <p>Limit: One entry per wallet</p>
-                      </>
-                    ) : (
-                      <>
-                        <p>Total: {totalCost.toFixed(4)} BNB</p>
-                        <p>Est. gas: ~{estimatedGas.toFixed(4)} BNB</p>
-                        <p>Total with gas: ~{totalWithGas.toFixed(4)} BNB</p>
-                      </>
-                    )}
                   </div>
                 )}
 

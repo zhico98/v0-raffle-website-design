@@ -64,7 +64,6 @@ export async function initializeRaffleRounds() {
 export async function getCurrentRound(raffleId: number) {
   try {
     const supabase = await createClient()
-
     const now = new Date().toISOString()
 
     const { data, error } = await supabase
@@ -72,26 +71,65 @@ export async function getCurrentRound(raffleId: number) {
       .select("*")
       .eq("raffle_id", raffleId.toString())
       .eq("status", "active")
-      .lte("start_time", now)
-      .gte("end_time", now)
       .order("start_time", { ascending: false })
       .limit(1)
 
     if (error) throw error
 
-    const round = data && data.length > 0 ? data[0] : null
+    let round = data && data.length > 0 ? data[0] : null
 
     if (round) {
-      console.log("[v0] Current round found:", {
+      const endTime = new Date(round.end_time)
+      const currentTime = new Date(now)
+
+      if (currentTime > endTime) {
+        console.log("[v0] Round expired, creating new round for raffle:", raffleId)
+
+        // Mark current round as ended
+        await supabase.from("raffle_rounds").update({ status: "ended" }).eq("id", round.id)
+
+        // Get the highest round number for this raffle
+        const { data: allRounds } = await supabase
+          .from("raffle_rounds")
+          .select("round_number")
+          .eq("raffle_id", raffleId.toString())
+          .order("round_number", { ascending: false })
+          .limit(1)
+
+        const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
+
+        // Create new round
+        const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
+        round = newRoundResult.data
+
+        console.log("[v0] Auto-created new round:", round)
+      }
+    } else {
+      console.log("[v0] No active round found, creating new round for raffle:", raffleId)
+
+      const { data: allRounds } = await supabase
+        .from("raffle_rounds")
+        .select("round_number")
+        .eq("raffle_id", raffleId.toString())
+        .order("round_number", { ascending: false })
+        .limit(1)
+
+      const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
+
+      const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
+      round = newRoundResult.data
+
+      console.log("[v0] Created new round:", round)
+    }
+
+    if (round) {
+      console.log("[v0] Current round:", {
         id: round.id,
         raffleId: round.raffle_id,
-        startTime: round.start_time,
+        roundNumber: round.round_number,
         endTime: round.end_time,
-        now: now,
         isActive: new Date(round.end_time) > new Date(now),
       })
-    } else {
-      console.log("[v0] No active round found for raffle", raffleId, "at time", now)
     }
 
     return { success: true, data: round }

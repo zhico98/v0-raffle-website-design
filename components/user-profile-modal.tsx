@@ -58,7 +58,7 @@ export function UserProfileModal({ isOpen, onClose, onSubmit }: UserProfileModal
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name" className="text-white mb-2 block">
-              Name <span className="text-[#FFD700]">*</span>
+              Name <span className="text-[#9945FF]">*</span>
             </Label>
             <Input
               id="name"
@@ -105,7 +105,7 @@ export function UserProfileModal({ isOpen, onClose, onSubmit }: UserProfileModal
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black font-bold hover:opacity-90 transition-opacity"
+            className="w-full bg-gradient-to-r from-[#9945FF] to-[#c084fc] text-white font-bold hover:opacity-90 transition-opacity"
           >
             Complete Setup
           </Button>

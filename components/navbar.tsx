@@ -33,7 +33,7 @@ export function Navbar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 h-20 bg-black/60 border-b border-[rgba(255,215,0,0.15)]"
+      className="fixed top-0 left-0 right-0 z-50 h-20 bg-black/60 border-b border-[rgba(153,69,255,0.15)]"
       style={{ backdropFilter: "blur(12px)" }}
     >
       <div className="container mx-auto px-6 h-full">
@@ -41,8 +41,8 @@ export function Navbar() {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3 group">
               <span
-                className="font-heading font-bold text-2xl text-[#FFD700] tracking-wide group-hover:brightness-110 transition-all"
-                style={{ textShadow: "0 0 16px rgba(255,215,0,0.5)" }}
+                className="font-heading font-bold text-2xl text-[#9945FF] tracking-wide group-hover:brightness-110 transition-all"
+                style={{ textShadow: "0 0 16px rgba(153,69,255,0.5)" }}
               >
                 LOTTA.GG
               </span>
@@ -51,10 +51,10 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-4">
               <Link
                 href="/raffles"
-                className="text-sm text-foreground/80 hover:text-[#FFD95E] transition-all tracking-wide"
+                className="text-sm text-foreground/80 hover:text-[#9945FF] transition-all tracking-wide"
                 style={{ transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.textShadow = "0 0 6px rgba(255,215,0,0.25)"
+                  e.currentTarget.style.textShadow = "0 0 6px rgba(153,69,255,0.25)"
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.textShadow = "none"
@@ -64,10 +64,10 @@ export function Navbar() {
               </Link>
               <Link
                 href="/winners"
-                className="text-sm text-foreground/80 hover:text-[#FFD95E] transition-all tracking-wide"
+                className="text-sm text-foreground/80 hover:text-[#9945FF] transition-all tracking-wide"
                 style={{ transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.textShadow = "0 0 6px rgba(255,215,0,0.25)"
+                  e.currentTarget.style.textShadow = "0 0 6px rgba(153,69,255,0.25)"
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.textShadow = "none"
@@ -77,10 +77,10 @@ export function Navbar() {
               </Link>
               <Link
                 href="/leaderboard"
-                className="text-sm text-foreground/80 hover:text-[#FFD95E] transition-all tracking-wide"
+                className="text-sm text-foreground/80 hover:text-[#9945FF] transition-all tracking-wide"
                 style={{ transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.textShadow = "0 0 6px rgba(255,215,0,0.25)"
+                  e.currentTarget.style.textShadow = "0 0 6px rgba(153,69,255,0.25)"
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.textShadow = "none"
@@ -97,25 +97,25 @@ export function Navbar() {
                 onClick={handleWalletClick}
                 className="h-9 px-5 rounded-full font-semibold text-sm transition-all hover:scale-[1.03]"
                 style={{
-                  background: "linear-gradient(90deg, #F0C040, #FFB800)",
-                  color: "#000",
-                  boxShadow: "0 0 10px rgba(240,192,64,0.25)",
+                  background: "linear-gradient(90deg, #9945FF, #7928CA)",
+                  color: "#fff",
+                  boxShadow: "0 0 10px rgba(153,69,255,0.25)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(240,192,64,0.4)"
+                  e.currentTarget.style.boxShadow = "0 0 10px rgba(153,69,255,0.4)"
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(240,192,64,0.25)"
+                  e.currentTarget.style.boxShadow = "0 0 10px rgba(153,69,255,0.25)"
                 }}
               >
                 {displayName}
               </Button>
               {isConnected && userProfile?.avatar && (
                 <div
-                  className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-[#F0C040] overflow-hidden bg-black cursor-pointer hover:scale-110 transition-transform"
+                  className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-[#9945FF] overflow-hidden bg-black cursor-pointer hover:scale-110 transition-transform"
                   onClick={openProfileModal}
                   style={{
-                    boxShadow: "0 0 8px rgba(240,192,64,0.4)",
+                    boxShadow: "0 0 8px rgba(153,69,255,0.4)",
                   }}
                 >
                   <img
@@ -133,17 +133,17 @@ export function Navbar() {
                 className="h-9 px-5 rounded-full font-semibold text-sm uppercase transition-all hover:scale-[1.03]"
                 style={{
                   background: "transparent",
-                  border: "2px solid #F0C040",
-                  color: "#F0C040",
-                  boxShadow: "0 0 8px rgba(240,192,64,0.2)",
+                  border: "2px solid #9945FF",
+                  color: "#9945FF",
+                  boxShadow: "0 0 8px rgba(153,69,255,0.2)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(240,192,64,0.1)"
-                  e.currentTarget.style.boxShadow = "0 0 12px rgba(240,192,64,0.35)"
+                  e.currentTarget.style.background = "rgba(153,69,255,0.1)"
+                  e.currentTarget.style.boxShadow = "0 0 12px rgba(153,69,255,0.35)"
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent"
-                  e.currentTarget.style.boxShadow = "0 0 8px rgba(240,192,64,0.2)"
+                  e.currentTarget.style.boxShadow = "0 0 8px rgba(153,69,255,0.2)"
                 }}
               >
                 Logout

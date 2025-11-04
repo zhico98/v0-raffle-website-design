@@ -168,7 +168,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="bg-black/40 border border-white/10 rounded-lg p-4">
                     <p className="text-white/60 text-sm mb-1">Total Spent</p>
-                    <p className="text-3xl font-bold text-white">0 BNB</p>
+                    <p className="text-3xl font-bold text-white">0 SOL</p>
                   </div>
                 </div>
 
@@ -179,7 +179,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="bg-black/40 border border-white/10 rounded-lg p-4">
                     <p className="text-white/60 text-sm mb-1">Favorite Type</p>
-                    <p className="text-2xl font-bold text-white">BNB</p>
+                    <p className="text-2xl font-bold text-white">SOL</p>
                   </div>
                   <div className="bg-black/40 border border-white/10 rounded-lg p-4">
                     <p className="text-white/60 text-sm mb-1">Member Since</p>

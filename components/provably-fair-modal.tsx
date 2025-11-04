@@ -15,7 +15,7 @@ export function ProvablyFairModal({ isOpen, onClose }: ProvablyFairModalProps) {
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-black/30 backdrop-blur-md border border-[rgba(255,215,0,0.2)] rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+      <div className="relative bg-black/30 backdrop-blur-md border border-[rgba(153,69,255,0.2)] rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
         <h2 className="font-heading text-2xl font-bold text-white mb-4">Provably Fair</h2>
 
         <p className="text-sm text-[#b8b8b8] mb-6 leading-relaxed">
@@ -55,9 +55,9 @@ export function ProvablyFairModal({ isOpen, onClose }: ProvablyFairModalProps) {
             onClick={onClose}
             className="px-8 py-2 rounded-full font-semibold text-sm transition-all hover:scale-[1.03]"
             style={{
-              background: "linear-gradient(90deg, #FFD700, #FFB800)",
-              color: "#000",
-              boxShadow: "0 0 20px rgba(255,215,0,0.4)",
+              background: "linear-gradient(90deg, #9945FF, #7928CA)",
+              color: "#fff",
+              boxShadow: "0 0 20px rgba(153,69,255,0.4)",
             }}
           >
             Close

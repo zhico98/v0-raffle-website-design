@@ -62,20 +62,34 @@ export async function getCurrentRound(raffleId: string): Promise<RaffleRound | n
     const rounds = getRounds()
     const activeRound = rounds.find((r) => r.raffle_id === raffleId && r.status === "active")
 
-    if (!activeRound) {
-      console.log("[v0] No active round found for raffle:", raffleId)
-      return null
-    }
-
     // Check if round has expired
     const now = new Date()
-    const endTime = new Date(activeRound.end_time)
 
-    if (now > endTime) {
-      // Round has expired, mark as ended
-      activeRound.status = "ended"
-      saveRounds(rounds)
-      console.log("[v0] Round expired for raffle:", raffleId)
+    if (activeRound) {
+      const endTime = new Date(activeRound.end_time)
+
+      if (now > endTime) {
+        console.log("[v0] Round expired for raffle:", raffleId)
+        activeRound.status = "ended"
+
+        // Get the next round number
+        const allRaffleRounds = rounds.filter((r) => r.raffle_id === raffleId)
+        const maxRoundNumber = Math.max(...allRaffleRounds.map((r) => r.round_number), 0)
+
+        // Create new 24-hour round
+        const newRound = await createNewRound(raffleId, maxRoundNumber + 1)
+        saveRounds(rounds)
+
+        console.log("[v0] Auto-created new round:", newRound)
+        return newRound
+      }
+    } else {
+      console.log("[v0] No active round found, creating new round for raffle:", raffleId)
+      const allRaffleRounds = rounds.filter((r) => r.raffle_id === raffleId)
+      const maxRoundNumber = Math.max(...allRaffleRounds.map((r) => r.round_number), 0)
+
+      const newRound = await createNewRound(raffleId, maxRoundNumber + 1)
+      return newRound
     }
 
     return activeRound
@@ -89,22 +103,45 @@ export async function getAllActiveRounds(): Promise<RaffleRound[]> {
   try {
     const rounds = getRounds()
     const now = new Date()
+    let hasChanges = false
 
-    // Filter active rounds and check expiration
-    const activeRounds = rounds.filter((r) => {
-      if (r.status !== "active") return false
+    const raffleIds = ["1", "2", "3", "4"]
 
-      const endTime = new Date(r.end_time)
-      if (now > endTime) {
-        r.status = "ended"
-        return false
+    for (const raffleId of raffleIds) {
+      const activeRound = rounds.find((r) => r.raffle_id === raffleId && r.status === "active")
+
+      if (activeRound) {
+        const endTime = new Date(activeRound.end_time)
+        if (now > endTime) {
+          // Mark as ended
+          activeRound.status = "ended"
+          hasChanges = true
+
+          // Create new round
+          const allRaffleRounds = rounds.filter((r) => r.raffle_id === raffleId)
+          const maxRoundNumber = Math.max(...allRaffleRounds.map((r) => r.round_number), 0)
+          await createNewRound(raffleId, maxRoundNumber + 1)
+
+          console.log("[v0] Auto-renewed round for raffle:", raffleId)
+        }
+      } else {
+        // No active round, create one
+        const allRaffleRounds = rounds.filter((r) => r.raffle_id === raffleId)
+        const maxRoundNumber = Math.max(...allRaffleRounds.map((r) => r.round_number), 0)
+        await createNewRound(raffleId, maxRoundNumber + 1)
+        hasChanges = true
+
+        console.log("[v0] Created missing round for raffle:", raffleId)
       }
+    }
 
-      return true
-    })
+    if (hasChanges) {
+      saveRounds(rounds)
+    }
 
-    saveRounds(rounds)
-    return activeRounds
+    // Return all active rounds
+    const updatedRounds = getRounds()
+    return updatedRounds.filter((r) => r.status === "active")
   } catch (error) {
     console.error("[v0] Error fetching active rounds:", error)
     return []

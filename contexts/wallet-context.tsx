@@ -4,7 +4,6 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { WalletConnectionModal } from "@/components/wallet-connection-modal"
 import { UserProfileModal } from "@/components/user-profile-modal"
 import { ProfileModal } from "@/components/profile-modal"
-import { web3Provider } from "@/lib/web3-provider"
 import { getUserProfile, updateUserProfile as updateUserProfileAction } from "@/lib/actions/user-actions"
 
 interface UserProfile {
@@ -37,18 +36,19 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
-const getMetaMaskProvider = () => {
-  if (typeof window === "undefined" || !window.ethereum) {
+const getPhantomProvider = () => {
+  if (typeof window === "undefined") {
     return null
   }
 
-  // If there are multiple providers, find MetaMask
-  if (window.ethereum.providers?.length) {
-    return window.ethereum.providers.find((p: any) => p.isMetaMask) || null
+  if ("phantom" in window) {
+    const provider = (window as any).phantom?.solana
+    if (provider?.isPhantom) {
+      return provider
+    }
   }
 
-  // Single provider - check if it's MetaMask
-  return window.ethereum.isMetaMask ? window.ethereum : null
+  return null
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
@@ -90,7 +90,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const saveProfileToSupabase = async (address: string, profile: UserProfile) => {
     try {
-      console.log("[v0] Saving profile to Supabase:", { address, profile })
+      console.log("[v0] WalletContext: saveProfileToSupabase called")
+      console.log("[v0] WalletContext: Address:", address)
+      console.log("[v0] WalletContext: Profile data:", profile)
+
       const result = await updateUserProfileAction(address, {
         username: profile.name,
         email: profile.email,
@@ -98,63 +101,58 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         avatar_url: profile.avatar || undefined,
       })
 
+      console.log("[v0] WalletContext: updateUserProfileAction result:", result)
+
       if (result.success) {
-        console.log("[v0] Profile saved to Supabase successfully for address:", address)
+        console.log("[v0] WalletContext: Profile saved successfully, updating local state")
         setUserProfile(profile)
       } else {
-        console.error("[v0] Failed to save profile to Supabase:", result.error)
+        console.error("[v0] WalletContext: Failed to save profile:", result.error)
       }
     } catch (error) {
-      console.error("[v0] Error saving profile to Supabase:", error)
+      console.error("[v0] WalletContext: Exception in saveProfileToSupabase:", error)
     }
   }
 
   useEffect(() => {
-    const provider = getMetaMaskProvider()
+    const provider = getPhantomProvider()
     if (provider) {
-      provider.on("accountsChanged", handleAccountsChanged)
-      provider.on("chainChanged", handleChainChanged)
+      provider.on("accountChanged", (publicKey: any) => {
+        if (publicKey) {
+          handleAccountsChanged(publicKey.toString())
+        } else {
+          disconnectWallet()
+        }
+      })
 
-      return () => {
-        provider.removeListener("accountsChanged", handleAccountsChanged)
-        provider.removeListener("chainChanged", handleChainChanged)
-      }
+      provider.on("disconnect", () => {
+        disconnectWallet()
+      })
     }
   }, [])
 
-  const handleAccountsChanged = async (accounts: string[]) => {
-    if (accounts.length === 0) {
+  const handleAccountsChanged = async (address: string) => {
+    if (!address) {
       disconnectWallet()
-    } else if (accounts[0] !== account) {
-      setAccount(accounts[0])
+    } else if (address !== account) {
+      setAccount(address)
       setIsConnected(true)
-      await loadProfileFromSupabase(accounts[0])
+      await loadProfileFromSupabase(address)
       refreshBalance()
     }
   }
 
-  const handleChainChanged = (chainId: string) => {
-    console.log("[v0] Chain changed to:", chainId)
-  }
-
   const checkIfWalletIsConnected = async () => {
     try {
-      const provider = getMetaMaskProvider()
-      if (provider) {
-        const accounts = await provider.request({ method: "eth_accounts" })
-        if (accounts.length > 0) {
-          setAccount(accounts[0])
+      const provider = getPhantomProvider()
+      if (provider && provider.isConnected) {
+        const publicKey = provider.publicKey?.toString()
+        if (publicKey) {
+          setAccount(publicKey)
           setIsConnected(true)
-          await loadProfileFromSupabase(accounts[0])
-          try {
-            await web3Provider.initialize()
-            await web3Provider.switchToBNBChain()
-            const userBalance = await web3Provider.getBalance(accounts[0])
-            setBalance(userBalance)
-            console.log("[v0] User balance loaded on page refresh:", userBalance, "BNB")
-          } catch (error) {
-            console.error("[v0] Error initializing Web3Provider on page refresh:", error)
-          }
+          await loadProfileFromSupabase(publicKey)
+          await refreshBalance()
+          console.log("[v0] Phantom wallet already connected:", publicKey)
         }
       }
     } catch (error) {
@@ -164,36 +162,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const connectWallet = async () => {
     try {
-      const provider = getMetaMaskProvider()
+      const provider = getPhantomProvider()
 
       if (!provider) {
-        alert("MetaMask is not installed! Please install MetaMask extension to connect your BNB wallet.")
-        window.open("https://metamask.io/download/", "_blank")
+        alert("Phantom wallet is not installed! Please install Phantom extension to connect your Solana wallet.")
+        window.open("https://phantom.app/", "_blank")
         return
       }
 
       setModalOpen(true)
       setConnectionStatus("connecting")
 
-      const accounts = await provider.request({
-        method: "eth_requestAccounts",
-      })
+      const response = await provider.connect()
+      const publicKey = response.publicKey.toString()
 
-      if (accounts.length > 0) {
-        setAccount(accounts[0])
+      if (publicKey) {
+        setAccount(publicKey)
         setIsConnected(true)
 
-        const savedProfile = await loadProfileFromSupabase(accounts[0])
+        const savedProfile = await loadProfileFromSupabase(publicKey)
 
-        try {
-          await web3Provider.initialize()
-          await web3Provider.switchToBNBChain()
-          const userBalance = await web3Provider.getBalance(accounts[0])
-          setBalance(userBalance)
-          console.log("[v0] User balance:", userBalance, "BNB")
-        } catch (error) {
-          console.error("[v0] Error initializing Web3Provider:", error)
-        }
+        await refreshBalance()
+        console.log("[v0] Phantom wallet connected:", publicKey)
 
         setConnectionStatus("connected")
         setTimeout(() => {
@@ -225,13 +215,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }
 
   const updateProfile = async (profile: UserProfile) => {
+    console.log("[v0] WalletContext: updateProfile called")
+    console.log("[v0] WalletContext: Profile:", profile)
+    console.log("[v0] WalletContext: Account:", account)
+
     if (account) {
       await saveProfileToSupabase(account, profile)
+    } else {
+      console.error("[v0] WalletContext: No account connected, cannot save profile")
     }
-    console.log("[v0] User profile updated:", profile)
   }
 
   const disconnectWallet = () => {
+    const provider = getPhantomProvider()
+    if (provider) {
+      provider.disconnect()
+    }
     setAccount(null)
     setIsConnected(false)
     setUserProfile(null)
@@ -248,39 +247,50 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         throw new Error("No wallet connected")
       }
 
-      const provider = getMetaMaskProvider()
+      const provider = getPhantomProvider()
       if (!provider) {
-        throw new Error("MetaMask is not installed")
+        throw new Error("Phantom wallet is not installed")
       }
 
       setTransactionStatus({ status: "pending" })
 
-      const amountInWei = BigInt(Math.floor(Number.parseFloat(amount) * 1e18)).toString(16)
+      // Import Solana web3.js dynamically
+      const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import("@solana/web3.js")
 
-      console.log("[v0] Sending transaction:", { to, amount, amountInWei })
+      // Connect to Solana mainnet
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed")
 
-      const txHash = await provider.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: account,
-            to: to,
-            value: `0x${amountInWei}`,
-          },
-        ],
-      })
+      // Convert SOL to lamports
+      const lamports = Math.floor(Number.parseFloat(amount) * LAMPORTS_PER_SOL)
+
+      console.log("[v0] Sending transaction:", { to, amount, lamports })
+
+      // Create transaction
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: new PublicKey(account),
+          toPubkey: new PublicKey(to),
+          lamports,
+        }),
+      )
+
+      // Get recent blockhash
+      const { blockhash } = await connection.getLatestBlockhash()
+      transaction.recentBlockhash = blockhash
+      transaction.feePayer = new PublicKey(account)
+
+      // Sign and send transaction
+      const signed = await provider.signAndSendTransaction(transaction)
+      const txHash = signed.signature
 
       console.log("[v0] Transaction sent:", txHash)
       setTransactionStatus({ status: "pending", hash: txHash })
 
-      const receipt = await waitForTransaction(provider, txHash)
+      // Wait for confirmation
+      await connection.confirmTransaction(txHash, "confirmed")
 
-      if (receipt.status === "0x1" || receipt.status === 1) {
-        console.log("[v0] Transaction confirmed:", txHash)
-        setTransactionStatus({ status: "confirmed", hash: txHash })
-      } else {
-        throw new Error("Transaction failed")
-      }
+      console.log("[v0] Transaction confirmed:", txHash)
+      setTransactionStatus({ status: "confirmed", hash: txHash })
 
       return txHash
     } catch (err: any) {
@@ -291,27 +301,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const waitForTransaction = async (provider: any, txHash: string, maxAttempts = 60): Promise<any> => {
-    for (let i = 0; i < maxAttempts; i++) {
-      try {
-        const receipt = await provider.request({
-          method: "eth_getTransactionReceipt",
-          params: [txHash],
-        })
-
-        if (receipt !== null) {
-          return receipt
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      } catch (error) {
-        console.error("[v0] Error checking transaction receipt:", error)
-      }
-    }
-
-    throw new Error("Transaction confirmation timeout")
-  }
-
   const resetTransactionStatus = () => {
     setTransactionStatus({ status: "idle" })
   }
@@ -319,13 +308,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const refreshBalance = async () => {
     if (account) {
       try {
-        if (!web3Provider.isInitialized()) {
-          console.log("[v0] Initializing provider before getting balance")
-          await web3Provider.initialize()
+        const provider = getPhantomProvider()
+        if (!provider) {
+          throw new Error("Phantom wallet not found")
         }
-        const userBalance = await web3Provider.getBalance(account)
-        setBalance(userBalance)
-        console.log("[v0] Balance refreshed:", userBalance, "BNB")
+
+        const { Connection, PublicKey, LAMPORTS_PER_SOL } = await import("@solana/web3.js")
+        const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed")
+
+        const publicKey = new PublicKey(account)
+        const balanceLamports = await connection.getBalance(publicKey)
+        const balanceSOL = balanceLamports / LAMPORTS_PER_SOL
+
+        setBalance(balanceSOL.toFixed(4))
+        console.log("[v0] Balance refreshed:", balanceSOL, "SOL")
       } catch (error: any) {
         console.error("[v0] Error refreshing balance:", error?.message || error)
       }
@@ -375,6 +371,6 @@ export function useWallet() {
 
 declare global {
   interface Window {
-    ethereum?: any
+    phantom?: any
   }
 }

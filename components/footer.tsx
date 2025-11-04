@@ -17,7 +17,7 @@ export function Footer() {
             aria-label="Follow on X"
           >
             <Image
-              src="/x-icon.png"
+              src="/x-icon.svg"
               alt="X (Twitter)"
               width={24}
               height={24}
@@ -34,7 +34,7 @@ export function Footer() {
             aria-label="Join Telegram"
           >
             <Image
-              src="/telegram-icon.png"
+              src="/telegram-icon.svg"
               alt="Telegram"
               width={24}
               height={24}

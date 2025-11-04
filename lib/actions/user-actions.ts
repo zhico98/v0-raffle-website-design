@@ -68,9 +68,9 @@ export async function getUserStats(walletAddress: string) {
       .from("user_stats")
       .select("*")
       .eq("wallet_address", walletAddress.toLowerCase())
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== "PGRST116") throw error
+    if (error) throw error
     return { success: true, data }
   } catch (error) {
     console.error("[v0] Error getting user stats:", error)

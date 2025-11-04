@@ -74,7 +74,7 @@ export function WinnerAnnouncementModal({ isOpen, onClose, winner, isCurrentUser
 
             <div>
               <p className="text-white/60 text-sm mb-1">Prize Amount</p>
-              <p className="text-3xl font-heading font-bold text-[#F0C040]">{winner.prizeAmount} BNB</p>
+              <p className="text-3xl font-heading font-bold text-[#14F195]">{winner.prizeAmount} SOL</p>
             </div>
 
             <div>
@@ -94,12 +94,12 @@ export function WinnerAnnouncementModal({ isOpen, onClose, winner, isCurrentUser
 
           {winner.txHash && (
             <a
-              href={`https://bscscan.com/tx/${winner.txHash}`}
+              href={`https://solscan.io/tx/${winner.txHash}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-[#F0C040] hover:text-[#FFE55C] transition-colors text-sm"
+              className="flex items-center justify-center gap-2 text-[#14F195] hover:text-[#9945FF] transition-colors text-sm"
             >
-              View Transaction on BscScan
+              View Transaction on Solscan
               <ExternalLink className="w-4 h-4" />
             </a>
           )}

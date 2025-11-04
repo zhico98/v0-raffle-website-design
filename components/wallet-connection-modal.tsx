@@ -36,11 +36,11 @@ export function WalletConnectionModal({ isOpen, status, onClose }: WalletConnect
           <div
             className={`relative w-20 h-20 rounded-full flex items-center justify-center text-4xl ${
               status === "connected"
-                ? "bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500"
+                ? "bg-gradient-to-br from-[#9945FF]/20 to-purple-500/20 border-2 border-[#9945FF]"
                 : "bg-gradient-to-br from-gray-700/20 to-gray-800/20 border-2 border-gray-600"
             }`}
           >
-            🦊{status === "connected" && <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />}
+            👻{status === "connected" && <div className="absolute inset-0 rounded-full bg-[#9945FF]/20 animate-ping" />}
           </div>
 
           {/* Status Text */}
@@ -61,8 +61,8 @@ export function WalletConnectionModal({ isOpen, status, onClose }: WalletConnect
 
           {status === "connected" && (
             <>
-              <h3 className="text-xl font-bold text-white">Successfully connected with MetaMask</h3>
-              <p className="text-sm text-green-400">You're good to go!</p>
+              <h3 className="text-xl font-bold text-white">Successfully connected with Phantom</h3>
+              <p className="text-sm text-[#9945FF]">You're good to go!</p>
             </>
           )}
 
@@ -74,7 +74,7 @@ export function WalletConnectionModal({ isOpen, status, onClose }: WalletConnect
           )}
 
           {/* Protected by text */}
-          <p className="text-xs text-gray-500 mt-4">Protected by MetaMask</p>
+          <p className="text-xs text-gray-500 mt-4">Protected by Phantom</p>
         </div>
       </div>
     </div>

@@ -10,10 +10,10 @@ import { drawWinner, getWinners, type Winner } from "@/lib/winner-selection"
 import { WinnerAnnouncementModal } from "@/components/winner-announcement-modal"
 
 const rafflesData = [
-  { id: 1, title: "0.0389 BNB", prize: "0.0389" },
-  { id: 2, title: "0.0777 BNB", prize: "0.0777" },
-  { id: 3, title: "0.23 BNB", prize: "0.23" },
-  { id: 4, title: "0.322 BNB", prize: "0.322" },
+  { id: 1, title: "0.5 SOL", prize: "0.5" },
+  { id: 2, title: "1 SOL", prize: "1" },
+  { id: 3, title: "3 SOL", prize: "3" },
+  { id: 4, title: "4 SOL", prize: "4" },
 ]
 
 export default function AdminPage() {
@@ -88,7 +88,7 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xl font-heading font-bold text-white mb-1">{raffle.title}</h3>
-                      <p className="text-white/60 text-sm">Prize: {raffle.prize} BNB</p>
+                      <p className="text-white/60 text-sm">Prize: {raffle.prize} SOL</p>
                       {winner && (
                         <div className="mt-2 text-sm">
                           <p className="text-green-400 font-semibold">Winner Selected</p>
@@ -147,7 +147,7 @@ export default function AdminPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[#F0C040] font-bold">{winner.prizeAmount} BNB</p>
+                      <p className="text-[#14F195] font-bold">{winner.prizeAmount} SOL</p>
                       <p className="text-white/40 text-xs">{new Date(winner.timestamp).toLocaleString()}</p>
                     </div>
                   </div>

@@ -40,6 +40,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   useEffect(() => {
     if (isOpen && userProfile) {
+      console.log("[v0] ProfileModal: Loading user profile into form:", userProfile)
       setFormData({
         name: userProfile.name || "",
         email: userProfile.email || "",
@@ -105,22 +106,26 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   if (!isOpen) return null
 
   const handleSave = async () => {
+    console.log("[v0] ProfileModal: handleSave called with formData:", formData)
+    console.log("[v0] ProfileModal: Current account:", account)
+
     setIsLoading(true)
     try {
+      console.log("[v0] ProfileModal: Calling updateUserProfile...")
       await updateUserProfile({
         name: formData.name,
         email: formData.email,
         twitter: formData.twitter,
         avatar: formData.avatar,
       })
-      console.log("[v0] Profile saved:", formData)
+      console.log("[v0] ProfileModal: updateUserProfile completed successfully")
 
       setSaveSuccess(true)
       setTimeout(() => {
         setSaveSuccess(false)
       }, 3000)
     } catch (error) {
-      console.error("[v0] Error saving profile:", error)
+      console.error("[v0] ProfileModal: Error in handleSave:", error)
     } finally {
       setIsLoading(false)
     }
@@ -157,7 +162,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-6xl max-h-[90vh] rounded-xl border border-[rgba(255,215,0,0.2)] bg-[#0a0a0a] overflow-hidden">
+      <div className="relative w-full max-w-6xl max-h-[90vh] rounded-xl border border-[rgba(153,69,255,0.3)] bg-[#0a0a0a] overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
@@ -166,13 +171,13 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] h-full max-h-[90vh]">
-          <div className="border-r border-[rgba(255,215,0,0.1)] bg-black/40 p-6 space-y-2">
+          <div className="border-r border-[rgba(153,69,255,0.2)] bg-black/40 p-6 space-y-2">
             <h2 className="text-lg font-semibold text-white mb-4">Profile</h2>
             <Button
               variant="ghost"
               className={`w-full justify-start ${
                 activeTab === "options"
-                  ? "bg-[rgba(255,215,0,0.1)] text-[#f5d36c] border border-[rgba(255,215,0,0.2)]"
+                  ? "bg-[rgba(153,69,255,0.15)] text-[#9945FF] border border-[rgba(153,69,255,0.3)]"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               }`}
               onClick={() => setActiveTab("options")}
@@ -183,7 +188,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               variant="ghost"
               className={`w-full justify-start ${
                 activeTab === "statistics"
-                  ? "bg-[rgba(255,215,0,0.1)] text-[#f5d36c] border border-[rgba(255,215,0,0.2)]"
+                  ? "bg-[rgba(153,69,255,0.15)] text-[#9945FF] border border-[rgba(153,69,255,0.3)]"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               }`}
               onClick={() => setActiveTab("statistics")}
@@ -194,7 +199,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               variant="ghost"
               className={`w-full justify-start ${
                 activeTab === "transactions"
-                  ? "bg-[rgba(255,215,0,0.1)] text-[#f5d36c] border border-[rgba(255,215,0,0.2)]"
+                  ? "bg-[rgba(153,69,255,0.15)] text-[#9945FF] border border-[rgba(153,69,255,0.3)]"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               }`}
               onClick={() => setActiveTab("transactions")}
@@ -210,7 +215,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                   <div className="flex items-start gap-6">
                     <div className="relative group">
                       <div
-                        className="w-24 h-24 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#F0C040] transition-all"
+                        className="w-24 h-24 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#9945FF] transition-all"
                         onClick={() => fileInputRef.current?.click()}
                       >
                         {formData.avatar ? (
@@ -221,8 +226,8 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                           />
                         ) : (
                           <div className="flex flex-col items-center gap-2">
-                            <Plus className="w-8 h-8 text-white/40 group-hover:text-[#F0C040] transition-colors" />
-                            <span className="text-white/40 text-xs group-hover:text-[#F0C040] transition-colors">
+                            <Plus className="w-8 h-8 text-white/40 group-hover:text-[#9945FF] transition-colors" />
+                            <span className="text-white/40 text-xs group-hover:text-[#9945FF] transition-colors">
                               Add Photo
                             </span>
                           </div>
@@ -302,8 +307,8 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         className={`w-full transition-all ${
                           saveSuccess
                             ? "bg-green-600 hover:bg-green-600"
-                            : "bg-gradient-to-r from-[#FFD700] to-[#FFB800] hover:from-[#FFE55C] hover:to-[#FFD700]"
-                        } text-black font-semibold`}
+                            : "bg-gradient-to-r from-[#9945FF] to-[#c084fc] hover:from-[#c084fc] hover:to-[#9945FF]"
+                        } text-white font-semibold`}
                       >
                         {saveSuccess ? (
                           <span className="flex items-center gap-2">
@@ -333,7 +338,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                     <h2 className="text-2xl font-bold text-white">Your Statistics</h2>
                     <div className="text-sm text-white/60">
                       Balance:{" "}
-                      <span className="text-[#F0C040] font-semibold">{Number.parseFloat(balance).toFixed(4)} BNB</span>
+                      <span className="text-[#9945FF] font-semibold">{Number.parseFloat(balance).toFixed(4)} SOL</span>
                     </div>
                   </div>
 
@@ -354,14 +359,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         </div>
                         <div className="bg-black/40 border border-white/10 rounded-lg p-4">
                           <p className="text-white/60 text-sm mb-1">Total Spent</p>
-                          <p className="text-3xl font-bold text-white">{stats.totalSpent} BNB</p>
+                          <p className="text-3xl font-bold text-white">{stats.totalSpent} SOL</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-black/40 border border-white/10 rounded-lg p-4">
                           <p className="text-white/60 text-sm mb-1">Win Rate</p>
-                          <p className="text-2xl font-bold text-[#FFD700]">{winRate}%</p>
+                          <p className="text-2xl font-bold text-[#9945FF]">{winRate}%</p>
                         </div>
                         <div className="bg-black/40 border border-white/10 rounded-lg p-4">
                           <p className="text-white/60 text-sm mb-1">Raffles Entered</p>
@@ -386,14 +391,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                   <div
                                     className={`p-2 rounded-lg ${
                                       tx.type === "raffle_entry"
-                                        ? "bg-yellow-500/10"
+                                        ? "bg-purple-500/10"
                                         : tx.type === "prize_claim"
                                           ? "bg-green-500/10"
-                                          : "bg-yellow-500/10"
+                                          : "bg-purple-500/10"
                                     }`}
                                   >
                                     {tx.type === "raffle_entry" ? (
-                                      <TrendingDown className="w-4 h-4 text-[#FFD700]" />
+                                      <TrendingDown className="w-4 h-4 text-[#9945FF]" />
                                     ) : (
                                       <TrendingUp className="w-5 h-5 text-green-400" />
                                     )}
@@ -419,7 +424,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                     }`}
                                   >
                                     {tx.type === "raffle_entry" ? "-" : "+"}
-                                    {tx.amount} BNB
+                                    {tx.amount} SOL
                                   </p>
                                   <p className="text-white/40 text-xs">
                                     {tx.ticketCount && `${tx.ticketCount} ticket${tx.ticketCount > 1 ? "s" : ""}`}
@@ -463,7 +468,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                   <TrendingDown
                                     className={`w-5 h-5 ${
                                       tx.status === "confirmed"
-                                        ? "text-[#FFD700]"
+                                        ? "text-[#9945FF]"
                                         : tx.status === "pending"
                                           ? "text-yellow-400"
                                           : "text-red-400"
@@ -491,7 +496,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                 }`}
                               >
                                 {tx.type === "raffle_entry" ? "-" : "+"}
-                                {tx.amount} BNB
+                                {tx.amount} SOL
                               </p>
                               <p
                                 className={`text-xs font-semibold ${
@@ -516,12 +521,12 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                               )}
                             </div>
                             <a
-                              href={`https://bscscan.com/tx/${tx.hash}`}
+                              href={`https://solscan.io/tx/${tx.hash}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-[#F0C040] hover:text-[#FFE55C] transition-colors"
+                              className="flex items-center gap-1 text-[#9945FF] hover:text-[#14F195] transition-colors"
                             >
-                              View on BscScan
+                              View on Solscan
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           </div>

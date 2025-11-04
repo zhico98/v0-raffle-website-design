@@ -10,10 +10,10 @@ export function HeroBanner() {
           <h1
             className="font-heading font-semibold text-4xl mb-3 leading-tight"
             style={{
-              background: "linear-gradient(135deg, #FFD95E 0%, #FFB300 100%)",
+              background: "linear-gradient(135deg, #9945FF 0%, #c084fc 50%, #9945FF 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              textShadow: "0 0 12px rgba(255, 200, 80, 0.25)",
+              textShadow: "0 0 12px rgba(153, 69, 255, 0.4)",
             }}
           >
             Raffle. Reveal. Reward.
@@ -25,31 +25,30 @@ export function HeroBanner() {
               <button
                 className="relative overflow-hidden px-6 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-[1.03]"
                 style={{
-                  background: "linear-gradient(90deg, #FFD700, #FFB800)",
-                  color: "#000",
-                  boxShadow: "0 0 10px rgba(255,215,0,0.25)",
+                  background: "linear-gradient(90deg, #9945FF, #c084fc)",
+                  color: "#fff",
+                  boxShadow: "0 0 10px rgba(153,69,255,0.4)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(255,215,0,0.4)"
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(153,69,255,0.6)"
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(255,215,0,0.25)"
+                  e.currentTarget.style.boxShadow = "0 0 10px rgba(153,69,255,0.4)"
                 }}
               >
                 <span className="relative z-10">Enter Raffles</span>
-                {/* Shimmer effect overlay */}
                 <span
                   className="absolute inset-0 -translate-x-full animate-shimmer"
                   style={{
-                    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
-                    animation: "shimmer 3s infinite",
+                    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+                    animation: "shimmer 5s infinite",
                   }}
                 />
               </button>
             </Link>
 
             <Link href="/raffles/4">
-              <button className="px-6 py-2.5 rounded-lg bg-transparent border border-[#f5d36c]/40 text-foreground font-semibold text-sm hover:border-[#f5d36c] hover:bg-[rgba(245,211,108,0.05)] hover:shadow-[0_0_12px_rgba(245,211,108,0.2)] transition-all">
+              <button className="px-6 py-2.5 rounded-lg bg-transparent border-2 border-[#9945FF]/60 text-foreground font-semibold text-sm hover:border-[#9945FF] hover:bg-[rgba(153,69,255,0.1)] hover:shadow-[0_0_20px_rgba(153,69,255,0.4)] transition-all">
                 Daily Free Raffle
               </button>
             </Link>

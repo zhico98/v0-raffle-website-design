@@ -99,7 +99,7 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
     return (
       <Card className="group relative overflow-hidden bg-[#080808] border border-[#2b2b2b] rounded-xl h-[480px] animate-pulse">
         <div className="h-full flex items-center justify-center">
-          <Clock className="w-8 h-8 text-[#F0C040] animate-spin" />
+          <Clock className="w-8 h-8 text-[#9945ff] animate-spin" />
         </div>
       </Card>
     )
@@ -107,10 +107,10 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
 
   return (
     <Link href={`/raffles/${raffle.id}`} className="block">
-      <Card className="group relative overflow-hidden bg-[#080808] border border-[#2b2b2b] rounded-xl hover:border-[#f5d36c]/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(245,211,108,0.15)] transition-all duration-300">
+      <Card className="group relative overflow-hidden bg-[#080808] border border-[#2b2b2b] rounded-xl hover:border-[#9945ff]/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(153,69,255,0.15)] transition-all duration-300">
         <div className="relative h-[340px] -mt-6 overflow-hidden rounded-xl">
           <Image
-            src={raffle.image || "/placeholder.svg"}
+            src="/raffle-prize.png"
             alt={raffle.title}
             fill
             className="object-cover object-center scale-[1.25] transition-transform duration-500 group-hover:scale-[1.28]"
@@ -118,7 +118,7 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent" />
 
           <div className="absolute top-9 right-3 bg-black/70 backdrop-blur-sm border border-[#1c1c1c] rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-[#F0C040]" />
+            <Clock className="w-3.5 h-3.5 text-[#9945ff]" />
             <span className="text-xs font-heading font-semibold text-foreground">
               {timeRemaining.isExpired
                 ? "Ended"
@@ -127,8 +127,8 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
           </div>
 
           {isSoldOut && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-              <div className="bg-[#F0C040] text-black font-heading font-bold text-lg px-6 py-2 rounded-lg">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-gradient-to-r from-[#7d2edb] to-[#9945ff] text-white font-heading font-bold text-xl px-8 py-3 rounded-xl shadow-[0_0_30px_rgba(153,69,255,0.6)] border border-[#9945ff]/30">
                 {timeRemaining.isExpired ? "ENDED" : "SOLD OUT"}
               </div>
             </div>
@@ -136,18 +136,18 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
         </div>
 
         <div className="p-5 space-y-3">
-          <h3 className="font-heading font-semibold text-base text-[#F0C040]">{raffle.title}</h3>
+          <h3 className="font-heading font-semibold text-base text-[#9945ff]">{raffle.title}</h3>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-[#b8b8b8]">
               <span>
                 {ticketsSold} / {raffle.totalTickets} tickets
               </span>
-              <span className="text-[#F0C040] font-semibold">{percentage.toFixed(0)}%</span>
+              <span className="text-[#9945ff] font-semibold">{percentage.toFixed(0)}%</span>
             </div>
             <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#FFD95E] to-[#FFB800] rounded-full"
+                className="h-full bg-gradient-to-r from-[#9945ff] to-[#7d2edb] rounded-full"
                 style={{
                   width: `${percentage}%`,
                   transition: "width 0.5s ease-out",
@@ -159,7 +159,7 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
           <div className="flex items-end justify-between pt-2">
             <div>
               <p className="text-xs text-[#777] uppercase tracking-wide mb-1">Entry</p>
-              <p className="font-heading text-xl font-bold text-[#F0C040]">{raffle.price}</p>
+              <p className="font-heading text-xl font-bold text-[#9945ff]">{raffle.price}</p>
             </div>
             <Button
               disabled={isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered)}
@@ -168,21 +168,21 @@ export function RaffleCard({ raffle }: RaffleCardProps) {
                 background:
                   isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered)
                     ? "#555"
-                    : "linear-gradient(90deg, #FFD700, #FFB800)",
-                color: isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered) ? "#999" : "#000",
+                    : "linear-gradient(90deg, #9945ff, #7d2edb)",
+                color: "#ffffff",
                 boxShadow:
                   isSoldOut || (raffle.price === "FREE" && hasAlreadyEntered)
                     ? "none"
-                    : "0 0 10px rgba(255,215,0,0.25)",
+                    : "0 0 10px rgba(153,69,255,0.25)",
               }}
               onMouseEnter={(e) => {
                 if (!isSoldOut && !(raffle.price === "FREE" && hasAlreadyEntered)) {
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(255,215,0,0.4)"
+                  e.currentTarget.style.boxShadow = "0 0 10px rgba(153,69,255,0.4)"
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSoldOut && !(raffle.price === "FREE" && hasAlreadyEntered)) {
-                  e.currentTarget.style.boxShadow = "0 0 10px rgba(255,215,0,0.25)"
+                  e.currentTarget.style.boxShadow = "0 0 10px rgba(153,69,255,0.25)"
                 }
               }}
             >

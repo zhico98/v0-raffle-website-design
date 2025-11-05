@@ -98,11 +98,26 @@ export async function getCurrentRound(raffleId: number) {
 
         const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
 
-        // Create new round
+        // Create new round with proper error handling to prevent duplicates
         const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
-        round = newRoundResult.data
+        if (newRoundResult.success && newRoundResult.data) {
+          round = newRoundResult.data
+          console.log("[v0] Auto-created new round:", round)
+        } else {
+          // If creation failed (likely duplicate), fetch the newly created round
+          const { data: freshRound } = await supabase
+            .from("raffle_rounds")
+            .select("*")
+            .eq("raffle_id", raffleId.toString())
+            .eq("status", "active")
+            .order("start_time", { ascending: false })
+            .limit(1)
+            .single()
 
-        console.log("[v0] Auto-created new round:", round)
+          if (freshRound) {
+            round = freshRound
+          }
+        }
       }
     } else {
       console.log("[v0] No active round found, creating new round for raffle:", raffleId)
@@ -117,9 +132,10 @@ export async function getCurrentRound(raffleId: number) {
       const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
 
       const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
-      round = newRoundResult.data
-
-      console.log("[v0] Created new round:", round)
+      if (newRoundResult.success && newRoundResult.data) {
+        round = newRoundResult.data
+        console.log("[v0] Created new round:", round)
+      }
     }
 
     if (round) {
@@ -143,8 +159,21 @@ export async function createNewRound(raffleId: number, roundNumber: number) {
   try {
     const supabase = await createClient()
 
+    const { data: existingRound } = await supabase
+      .from("raffle_rounds")
+      .select("*")
+      .eq("raffle_id", raffleId.toString())
+      .eq("round_number", roundNumber)
+      .eq("status", "active")
+      .maybeSingle()
+
+    if (existingRound) {
+      console.log("[v0] Round already exists, returning existing round")
+      return { success: true, data: existingRound }
+    }
+
     const now = new Date()
-    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000) // 24 hours from now
 
     const { data, error } = await supabase
       .from("raffle_rounds")
@@ -160,7 +189,24 @@ export async function createNewRound(raffleId: number, roundNumber: number) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // If error is duplicate, try to fetch the existing round
+      if (error.code === "23505") {
+        const { data: existingRound } = await supabase
+          .from("raffle_rounds")
+          .select("*")
+          .eq("raffle_id", raffleId.toString())
+          .eq("round_number", roundNumber)
+          .eq("status", "active")
+          .maybeSingle()
+
+        if (existingRound) {
+          return { success: true, data: existingRound }
+        }
+      }
+      throw error
+    }
+
     return { success: true, data }
   } catch (error) {
     console.error("[v0] Error creating new round:", error)

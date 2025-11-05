@@ -145,9 +145,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const checkIfWalletIsConnected = async () => {
     try {
       const provider = getPhantomProvider()
-      if (provider && provider.isConnected) {
-        const publicKey = provider.publicKey?.toString()
-        if (publicKey) {
+      if (provider) {
+        try {
+          const response = await provider.connect({ onlyIfTrusted: true })
+          if (response.publicKey) {
+            const publicKey = response.publicKey.toString()
+            setAccount(publicKey)
+            setIsConnected(true)
+            await loadProfileFromSupabase(publicKey)
+            await refreshBalance()
+            console.log("[v0] Phantom wallet auto-reconnected:", publicKey)
+            return
+          }
+        } catch (err) {
+          // User hasn't approved connection before, or rejected
+          console.log("[v0] No trusted connection available")
+        }
+
+        // Fallback: check if already connected
+        if (provider.isConnected && provider.publicKey) {
+          const publicKey = provider.publicKey.toString()
           setAccount(publicKey)
           setIsConnected(true)
           await loadProfileFromSupabase(publicKey)

@@ -170,18 +170,30 @@ export default function RaffleDetailPage() {
   }
 
   const handleBuyTickets = async () => {
+    console.log("[v0] Buy tickets clicked", {
+      isConnected,
+      isSoldOut,
+      currentRound: currentRound?.id,
+      hasAlreadyEntered,
+      isCheckingEntry,
+      rafflePrice: raffle.priceValue,
+    })
+
     if (!isConnected) {
+      console.log("[v0] Wallet not connected, opening connect modal")
       await connectWallet()
       return
     }
 
     if (isSoldOut || !currentRound) {
+      console.log("[v0] Raffle is sold out or no active round")
       return
     }
 
     if (raffle.priceValue === 0) {
       const result = await hasEnteredRaffle(account!, Number.parseInt(raffle.id), currentRound.id)
       if (result.success && (result.hasEntered || hasAlreadyEntered)) {
+        console.log("[v0] User already entered free raffle")
         setTxStatus("failed")
         setTxError("You have already entered this free raffle. Only one entry per wallet is allowed.")
         setHasAlreadyEntered(true)
@@ -189,6 +201,7 @@ export default function RaffleDetailPage() {
       }
     }
 
+    console.log("[v0] Starting raffle entry process")
     setIsProcessing(true)
     setTxStatus("pending")
     setTxError("")

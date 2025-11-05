@@ -14,8 +14,6 @@ export interface RaffleRound {
   total_prize_pool: number
 }
 
-const roundCreationLocks = new Map<string, Promise<any>>()
-
 export async function initializeRaffleRounds() {
   try {
     const supabase = await createClient()
@@ -63,7 +61,6 @@ export async function initializeRaffleRounds() {
 export async function getCurrentRound(raffleId: number) {
   try {
     const supabase = await createClient()
-    const now = new Date().toISOString()
 
     const { data, error } = await supabase
       .from("raffle_rounds")
@@ -72,115 +69,12 @@ export async function getCurrentRound(raffleId: number) {
       .eq("status", "active")
       .order("start_time", { ascending: false })
       .limit(1)
+      .maybeSingle()
 
     if (error) throw error
 
-    let round = data && data.length > 0 ? data[0] : null
-
-    if (round) {
-      const endTime = new Date(round.end_time)
-      const currentTime = new Date(now)
-
-      if (currentTime > endTime) {
-        const lockKey = `raffle-${raffleId}`
-
-        // Check if another process is already creating a round
-        if (roundCreationLocks.has(lockKey)) {
-          console.log("[v0] Round creation already in progress for raffle:", raffleId)
-          await roundCreationLocks.get(lockKey)
-
-          // Fetch the newly created round
-          const { data: freshRound } = await supabase
-            .from("raffle_rounds")
-            .select("*")
-            .eq("raffle_id", raffleId.toString())
-            .eq("status", "active")
-            .order("start_time", { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-          return { success: true, data: freshRound }
-        }
-
-        // Create lock
-        const creationPromise = (async () => {
-          try {
-            console.log("[v0] Round expired, creating new round for raffle:", raffleId)
-
-            // Mark current round as ended
-            await supabase.from("raffle_rounds").update({ status: "ended" }).eq("id", round.id)
-
-            // Get the highest round number for this raffle
-            const { data: allRounds } = await supabase
-              .from("raffle_rounds")
-              .select("round_number")
-              .eq("raffle_id", raffleId.toString())
-              .order("round_number", { ascending: false })
-              .limit(1)
-
-            const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
-
-            const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
-            if (newRoundResult.success && newRoundResult.data) {
-              round = newRoundResult.data
-              console.log("[v0] Auto-created new round:", round)
-            }
-          } finally {
-            // Release lock
-            roundCreationLocks.delete(lockKey)
-          }
-        })()
-
-        roundCreationLocks.set(lockKey, creationPromise)
-        await creationPromise
-      }
-    } else {
-      const lockKey = `raffle-${raffleId}`
-
-      if (roundCreationLocks.has(lockKey)) {
-        console.log("[v0] Round creation already in progress for raffle:", raffleId)
-        await roundCreationLocks.get(lockKey)
-
-        const { data: freshRound } = await supabase
-          .from("raffle_rounds")
-          .select("*")
-          .eq("raffle_id", raffleId.toString())
-          .eq("status", "active")
-          .order("start_time", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        return { success: true, data: freshRound }
-      }
-
-      const creationPromise = (async () => {
-        try {
-          console.log("[v0] No active round found, creating new round for raffle:", raffleId)
-
-          const { data: allRounds } = await supabase
-            .from("raffle_rounds")
-            .select("round_number")
-            .eq("raffle_id", raffleId.toString())
-            .order("round_number", { ascending: false })
-            .limit(1)
-
-          const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
-
-          const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
-          if (newRoundResult.success && newRoundResult.data) {
-            round = newRoundResult.data
-            console.log("[v0] Created new round:", round)
-          }
-        } finally {
-          roundCreationLocks.delete(lockKey)
-        }
-      })()
-
-      roundCreationLocks.set(lockKey, creationPromise)
-      await creationPromise
-    }
-
-    return { success: true, data: round }
+    // New rounds should be created by a cron job or manual trigger
+    return { success: true, data }
   } catch (error) {
     console.error("[v0] Error fetching current round:", error)
     return { success: false, data: null }
@@ -239,6 +133,7 @@ export async function createNewRound(raffleId: number, roundNumber: number) {
       throw error
     }
 
+    console.log("[v0] New round created:", data)
     return { success: true, data }
   } catch (error) {
     console.error("[v0] Error creating new round:", error)

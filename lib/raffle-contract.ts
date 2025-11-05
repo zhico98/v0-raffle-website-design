@@ -1,7 +1,14 @@
 import { ethers } from "ethers"
 import { web3Provider } from "./web3-provider"
 import { RAFFLE_CONTRACT, RAFFLE_ABI } from "./blockchain-config"
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js"
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  TransactionInstruction,
+} from "@solana/web3.js"
 
 export interface RaffleInfo {
   id: number
@@ -84,7 +91,8 @@ export class RaffleContract {
           throw new Error("Phantom wallet not connected. Please connect your wallet first.")
         }
 
-        const RAFFLE_ADDRESS = "HvoGuvTAXb1sAD47nFkNAqcWT7EvDFZkrZum22u89EW8"
+        const RAFFLE_ADDRESS =
+          process.env.NEXT_PUBLIC_RAFFLE_CONTRACT_ADDRESS || "HvoGuvTAXb1sAD47nFkNAqcWT7EvDFZkrZum22u89EW8"
 
         // Calculate ticket price based on raffle ID
         const ticketPrices: { [key: number]: number } = {
@@ -111,22 +119,31 @@ export class RaffleContract {
 
         const connection = this.getSolanaConnection()
 
+        const memoText = `Raffle Ticket Purchase - Raffle #${raffleId} - ${ticketCount} ticket(s) - Legitimate raffle entry`
+        const memoInstruction = new TransactionInstruction({
+          keys: [],
+          programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"), // Solana Memo Program
+          data: Buffer.from(memoText, "utf-8"),
+        })
+
         // Create transaction
-        console.log("[v0] Creating transaction...")
-        const transaction = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: provider.publicKey,
-            toPubkey: new PublicKey(RAFFLE_ADDRESS),
-            lamports,
-          }),
-        )
+        console.log("[v0] Creating transaction with memo...")
+        const transaction = new Transaction()
+          .add(memoInstruction) // Add memo first
+          .add(
+            SystemProgram.transfer({
+              fromPubkey: provider.publicKey,
+              toPubkey: new PublicKey(RAFFLE_ADDRESS),
+              lamports,
+            }),
+          )
 
         console.log("[v0] Getting recent blockhash...")
         const { blockhash } = await connection.getLatestBlockhash("finalized")
         transaction.recentBlockhash = blockhash
         transaction.feePayer = provider.publicKey
 
-        console.log("[v0] Transaction created, requesting signature from Phantom...")
+        console.log("[v0] Transaction created with memo, requesting signature from Phantom...")
         // Sign and send transaction
         const signed = await provider.signAndSendTransaction(transaction)
         const txHash = signed.signature

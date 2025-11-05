@@ -21,7 +21,7 @@ export function Footer() {
               alt="X (Twitter)"
               width={24}
               height={24}
-              className="opacity-80 hover:opacity-100 transition-opacity"
+              className="brightness-0 invert opacity-80 hover:opacity-100 transition-opacity"
             />
           </a>
 
@@ -38,7 +38,7 @@ export function Footer() {
               alt="Telegram"
               width={24}
               height={24}
-              className="opacity-80 hover:opacity-100 transition-opacity"
+              className="brightness-0 invert opacity-80 hover:opacity-100 transition-opacity"
             />
           </a>
         </div>

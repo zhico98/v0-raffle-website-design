@@ -14,11 +14,12 @@ export interface RaffleRound {
   total_prize_pool: number
 }
 
+const roundCreationLocks = new Map<string, Promise<any>>()
+
 export async function initializeRaffleRounds() {
   try {
     const supabase = await createClient()
 
-    // Check if there are any active rounds
     const { data: existingRounds, error: checkError } = await supabase
       .from("raffle_rounds")
       .select("*")
@@ -28,13 +29,11 @@ export async function initializeRaffleRounds() {
       console.error("[v0] Error checking existing rounds:", checkError)
     }
 
-    // If active rounds exist, don't create new ones
     if (existingRounds && existingRounds.length > 0) {
       console.log("[v0] Active rounds already exist, skipping initialization")
       return { success: true, message: "Active rounds already exist" }
     }
 
-    // Only create new rounds if none exist
     const now = new Date()
     const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
@@ -83,28 +82,14 @@ export async function getCurrentRound(raffleId: number) {
       const currentTime = new Date(now)
 
       if (currentTime > endTime) {
-        console.log("[v0] Round expired, creating new round for raffle:", raffleId)
+        const lockKey = `raffle-${raffleId}`
 
-        // Mark current round as ended
-        await supabase.from("raffle_rounds").update({ status: "ended" }).eq("id", round.id)
+        // Check if another process is already creating a round
+        if (roundCreationLocks.has(lockKey)) {
+          console.log("[v0] Round creation already in progress for raffle:", raffleId)
+          await roundCreationLocks.get(lockKey)
 
-        // Get the highest round number for this raffle
-        const { data: allRounds } = await supabase
-          .from("raffle_rounds")
-          .select("round_number")
-          .eq("raffle_id", raffleId.toString())
-          .order("round_number", { ascending: false })
-          .limit(1)
-
-        const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
-
-        // Create new round with proper error handling to prevent duplicates
-        const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
-        if (newRoundResult.success && newRoundResult.data) {
-          round = newRoundResult.data
-          console.log("[v0] Auto-created new round:", round)
-        } else {
-          // If creation failed (likely duplicate), fetch the newly created round
+          // Fetch the newly created round
           const { data: freshRound } = await supabase
             .from("raffle_rounds")
             .select("*")
@@ -112,40 +97,87 @@ export async function getCurrentRound(raffleId: number) {
             .eq("status", "active")
             .order("start_time", { ascending: false })
             .limit(1)
-            .single()
+            .maybeSingle()
 
-          if (freshRound) {
-            round = freshRound
-          }
+          return { success: true, data: freshRound }
         }
+
+        // Create lock
+        const creationPromise = (async () => {
+          try {
+            console.log("[v0] Round expired, creating new round for raffle:", raffleId)
+
+            // Mark current round as ended
+            await supabase.from("raffle_rounds").update({ status: "ended" }).eq("id", round.id)
+
+            // Get the highest round number for this raffle
+            const { data: allRounds } = await supabase
+              .from("raffle_rounds")
+              .select("round_number")
+              .eq("raffle_id", raffleId.toString())
+              .order("round_number", { ascending: false })
+              .limit(1)
+
+            const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
+
+            const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
+            if (newRoundResult.success && newRoundResult.data) {
+              round = newRoundResult.data
+              console.log("[v0] Auto-created new round:", round)
+            }
+          } finally {
+            // Release lock
+            roundCreationLocks.delete(lockKey)
+          }
+        })()
+
+        roundCreationLocks.set(lockKey, creationPromise)
+        await creationPromise
       }
     } else {
-      console.log("[v0] No active round found, creating new round for raffle:", raffleId)
+      const lockKey = `raffle-${raffleId}`
 
-      const { data: allRounds } = await supabase
-        .from("raffle_rounds")
-        .select("round_number")
-        .eq("raffle_id", raffleId.toString())
-        .order("round_number", { ascending: false })
-        .limit(1)
+      if (roundCreationLocks.has(lockKey)) {
+        console.log("[v0] Round creation already in progress for raffle:", raffleId)
+        await roundCreationLocks.get(lockKey)
 
-      const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
+        const { data: freshRound } = await supabase
+          .from("raffle_rounds")
+          .select("*")
+          .eq("raffle_id", raffleId.toString())
+          .eq("status", "active")
+          .order("start_time", { ascending: false })
+          .limit(1)
+          .maybeSingle()
 
-      const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
-      if (newRoundResult.success && newRoundResult.data) {
-        round = newRoundResult.data
-        console.log("[v0] Created new round:", round)
+        return { success: true, data: freshRound }
       }
-    }
 
-    if (round) {
-      console.log("[v0] Current round:", {
-        id: round.id,
-        raffleId: round.raffle_id,
-        roundNumber: round.round_number,
-        endTime: round.end_time,
-        isActive: new Date(round.end_time) > new Date(now),
-      })
+      const creationPromise = (async () => {
+        try {
+          console.log("[v0] No active round found, creating new round for raffle:", raffleId)
+
+          const { data: allRounds } = await supabase
+            .from("raffle_rounds")
+            .select("round_number")
+            .eq("raffle_id", raffleId.toString())
+            .order("round_number", { ascending: false })
+            .limit(1)
+
+          const nextRoundNumber = allRounds && allRounds.length > 0 ? allRounds[0].round_number + 1 : 1
+
+          const newRoundResult = await createNewRound(raffleId, nextRoundNumber)
+          if (newRoundResult.success && newRoundResult.data) {
+            round = newRoundResult.data
+            console.log("[v0] Created new round:", round)
+          }
+        } finally {
+          roundCreationLocks.delete(lockKey)
+        }
+      })()
+
+      roundCreationLocks.set(lockKey, creationPromise)
+      await creationPromise
     }
 
     return { success: true, data: round }
@@ -173,7 +205,7 @@ export async function createNewRound(raffleId: number, roundNumber: number) {
     }
 
     const now = new Date()
-    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000) // 24 hours from now
+    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
     const { data, error } = await supabase
       .from("raffle_rounds")
@@ -190,8 +222,8 @@ export async function createNewRound(raffleId: number, roundNumber: number) {
       .single()
 
     if (error) {
-      // If error is duplicate, try to fetch the existing round
       if (error.code === "23505") {
+        console.log("[v0] Duplicate round detected, fetching existing")
         const { data: existingRound } = await supabase
           .from("raffle_rounds")
           .select("*")
